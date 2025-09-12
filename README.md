@@ -56,17 +56,67 @@ Keep in mind:
 
 Here’s what’s available so far:
 
-| Function               | Description                                                                 | Example Usage |
-|------------------------|-----------------------------------------------------------------------------|---------------|
-| `add_sd_ruler()`       | Adds a vertical or horizontal “**SD ruler**” (red line) to a plot, with optional text label. |```gf_point(Thumb ~ Height, data = Fingers) %>%  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)``` |
-| `gf_sd_ruler()`        | Adds a vertical SD ruler to a `gf_point()` plot, positioned at the middle/mean/median of the x-axis. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_sd_ruler(y = Thumb, where = "mean")``` |
-| `gf_resid()`           | Adds vertical residual lines from an **lm()** model to a `gf_point()`/`gf_jitter()` plot. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_resid(lm(Thumb ~ Height, data = Fingers))``` |
-| `gf_resid_fun()`       | Adds vertical residual lines using a **function** (e.g., `function(x) 2 + 5*x`) instead of a model. |```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%  gf_resid_fun(function(x) 2 + 5*x)``` |
-| `gf_square_resid()`    | Visualizes **squared residuals** (as polygons) from an **lm()** model. Useful for teaching squared error. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_square_resid(lm(Thumb ~ Height, data = Fingers))``` |
-| `gf_square_resid_fun()`| Visualizes **squared residuals** from a **function-based curve** (e.g., `gf_function()`). |```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%  gf_square_resid_fun(function(x) 2 + 5*x)``` |
-
-
----
-
-
+<table>
+  <thead>
+    <tr>
+      <th>Function</th>
+      <th>Description</th>
+      <th>Example Usage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>gf_resid()</code></td>
+      <td>Adds vertical residual lines from an <code>lm()</code> model to a <code>gf_point()</code> or <code>gf_jitter()</code> plot.</td>
+      <td>
+        <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
+  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%
+  gf_resid(lm(Thumb ~ Height, data = Fingers))</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>gf_resid_fun()</code></td>
+      <td>Adds vertical residual lines using a <b>function</b> (e.g., <code>function(x) 2 + 5*x</code>) instead of a model.</td>
+      <td>
+        <pre lang="r"><code>gf_point(Y ~ X, data = df) %>%
+  gf_function(function(x) 2 + 5*x) %>%
+  gf_resid_fun(function(x) 2 + 5*x)</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>gf_square_resid()</code></td>
+      <td>Visualizes <b>squared residuals</b> (as polygons) from an <code>lm()</code> model. Useful for teaching squared error.</td>
+      <td>
+        <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
+  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%
+  gf_square_resid(lm(Thumb ~ Height, data = Fingers))</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>gf_square_resid_fun()</code></td>
+      <td>Visualizes <b>squared residuals</b> from a function-based curve (e.g., <code>gf_function()</code>).</td>
+      <td>
+        <pre lang="r"><code>gf_point(Y ~ X, data = df) %>%
+  gf_function(function(x) 2 + 5*x) %>%
+  gf_square_resid_fun(function(x) 2 + 5*x)</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>add_sd_ruler()</code></td>
+      <td>Adds a vertical or horizontal <b>SD ruler</b> (red line) to a plot, with optional text label.</td>
+      <td>
+        <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
+  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>gf_sd_ruler()</code></td>
+      <td>Adds a vertical SD ruler to a <code>gf_point()</code> plot, positioned at the middle, mean, or median of the x-axis.</td>
+      <td>
+        <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
+  gf_sd_ruler(y = Thumb, where = "mean")</code></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
 

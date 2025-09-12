@@ -58,12 +58,12 @@ Here’s what’s available so far:
 
 | Function               | Description                                                                 | Example Usage |
 |------------------------|-----------------------------------------------------------------------------|---------------|
-| `add_sd_ruler()`       | Adds a vertical or horizontal “**SD ruler**” (red line) to a plot, with optional text label. | ```gf_point(Thumb ~ Height, data = Fingers) %>%  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)``` |
-| `gf_sd_ruler()`        | Adds a vertical SD ruler to a `gf_point()` plot, positioned at the middle/mean/median of the x-axis. | ```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_sd_ruler(y = Thumb, where = "mean")``` |
-| `gf_resid()`           | Adds vertical residual lines from an **lm()** model to a `gf_point()`/`gf_jitter()` plot. | ```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_resid(lm(Thumb ~ Height, data = Fingers))``` |
-| `gf_resid_fun()`       | Adds vertical residual lines using a **function** (e.g., `function(x) 2 + 5*x`) instead of a model. | ```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%  gf_resid_fun(function(x) 2 + 5*x)``` |
-| `gf_square_resid()`    | Visualizes **squared residuals** (as polygons) from an **lm()** model. Useful for teaching squared error. | ```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_square_resid(lm(Thumb ~ Height, data = Fingers))``` |
-| `gf_square_resid_fun()`| Visualizes **squared residuals** from a **function-based curve** (e.g., `gf_function()`). | ```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%\n  gf_square_resid_fun(function(x) 2 + 5*x)``` |
+| `add_sd_ruler()`       | Adds a vertical or horizontal “**SD ruler**” (red line) to a plot, with optional text label. |```gf_point(Thumb ~ Height, data = Fingers) %>%  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)``` |
+| `gf_sd_ruler()`        | Adds a vertical SD ruler to a `gf_point()` plot, positioned at the middle/mean/median of the x-axis. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_sd_ruler(y = Thumb, where = "mean")``` |
+| `gf_resid()`           | Adds vertical residual lines from an **lm()** model to a `gf_point()`/`gf_jitter()` plot. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_resid(lm(Thumb ~ Height, data = Fingers))``` |
+| `gf_resid_fun()`       | Adds vertical residual lines using a **function** (e.g., `function(x) 2 + 5*x`) instead of a model. |```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%  gf_resid_fun(function(x) 2 + 5*x)``` |
+| `gf_square_resid()`    | Visualizes **squared residuals** (as polygons) from an **lm()** model. Useful for teaching squared error. |```gf_point(Thumb ~ Height, data = Fingers) %>%  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%  gf_square_resid(lm(Thumb ~ Height, data = Fingers))``` |
+| `gf_square_resid_fun()`| Visualizes **squared residuals** from a **function-based curve** (e.g., `gf_function()`). |```gf_point(Y ~ X, data = df) %>%  gf_function(function(x) 2 + 5*x) %>%  gf_square_resid_fun(function(x) 2 + 5*x)``` |
 
 
 ---

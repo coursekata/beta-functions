@@ -58,7 +58,7 @@ Here’s what’s available so far:
 
 | Function               | Description                                                                 | Example Usage |
 |------------------------|-----------------------------------------------------------------------------|---------------|
-| `add_sd_ruler()`       | Adds a vertical or horizontal “**SD ruler**” (red line) to a plot, with optional text label. | ```r\ngf_point(Thumb ~ Height, data = Fingers) %>%\n  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)\n``` |
+| `add_sd_ruler()`       | Adds a vertical or horizontal “**SD ruler**” (red line) to a plot, with optional text label. | ```gf_point(Thumb ~ Height, data = Fingers) %>%  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)\n``` |
 | `gf_sd_ruler()`        | Adds a vertical SD ruler to a `gf_point()` plot, positioned at the middle/mean/median of the x-axis. | ```r\ngf_point(Thumb ~ Height, data = Fingers) %>%\n  gf_sd_ruler(y = Thumb, where = "mean")\n``` |
 | `gf_resid()`           | Adds vertical residual lines from an **lm()** model to a `gf_point()`/`gf_jitter()` plot. | ```r\ngf_point(Thumb ~ Height, data = Fingers) %>%\n  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%\n  gf_resid(lm(Thumb ~ Height, data = Fingers))\n``` |
 | `gf_resid_fun()`       | Adds vertical residual lines using a **function** (e.g., `function(x) 2 + 5*x`) instead of a model. | ```r\ngf_point(Y ~ X, data = df) %>%\n  gf_function(function(x) 2 + 5*x) %>%\n  gf_resid_fun(function(x) 2 + 5*x)\n``` |

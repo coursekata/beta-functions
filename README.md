@@ -78,8 +78,7 @@ Here’s what’s available so far:
       <td><code>gf_resid_fun()</code></td>
       <td>Adds vertical residual lines using a <b>function</b> (e.g., <code>function(x){ 2 + 5*x}</code>) instead of a model.</td>
       <td>
-        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }
-
+        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }<br><br>
 gf_jitter(Thumb ~ Height, data = Fingers) %>%
    gf_function(my_function) %>%
    gf_resid_fun(my_function, color = "red", alpha = 0.5)</code></pre>
@@ -90,16 +89,15 @@ gf_jitter(Thumb ~ Height, data = Fingers) %>%
       <td>Visualizes <b>squared residuals</b> (as polygons) from an <code>lm()</code> model. Useful for teaching squared error.</td>
       <td>
         <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
-  gf_model(lm(Thumb ~ Height, data = Fingers)) %>%
-  gf_square_resid(lm(Thumb ~ Height, data = Fingers))</code></pre>
+   gf_model(lm(Thumb ~ Height, data = Fingers)) %>%
+   gf_square_resid(lm(Thumb ~ Height, data = Fingers))</code></pre>
       </td>
     </tr>
     <tr>
       <td><code>gf_square_resid_fun()</code></td>
       <td>Visualizes <b>squared residuals</b> from a function (e.g., <code>gf_function()</code>).</td>
       <td>
-        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }
-
+        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }<br><br>
 gf_jitter(Thumb ~ Height, data = Fingers) %>%
    gf_function(my_function) %>%
    gf_squaresid_fun(my_function, color = "red", alpha = 0.2)</code></pre>

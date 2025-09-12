@@ -76,11 +76,13 @@ Here’s what’s available so far:
     </tr>
     <tr>
       <td><code>gf_resid_fun()</code></td>
-      <td>Adds vertical residual lines using a <b>function</b> (e.g., <code>function(x) 2 + 5*x</code>) instead of a model.</td>
+      <td>Adds vertical residual lines using a <b>function</b> (e.g., <code>function(x){ 2 + 5*x}</code>) instead of a model.</td>
       <td>
-        <pre lang="r"><code>gf_point(Y ~ X, data = df) %>%
-  gf_function(function(x) 2 + 5*x) %>%
-  gf_resid_fun(function(x) 2 + 5*x)</code></pre>
+        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }
+
+gf_jitter(Thumb ~ Height, data = Fingers) %>%
+   gf_function(my_function) %>%
+   gf_resid_fun(my_function, color = "red", alpha = 0.5)</code></pre>
       </td>
     </tr>
     <tr>
@@ -94,19 +96,20 @@ Here’s what’s available so far:
     </tr>
     <tr>
       <td><code>gf_square_resid_fun()</code></td>
-      <td>Visualizes <b>squared residuals</b> from a function-based curve (e.g., <code>gf_function()</code>).</td>
+      <td>Visualizes <b>squared residuals</b> from a function (e.g., <code>gf_function()</code>).</td>
       <td>
-        <pre lang="r"><code>gf_point(Y ~ X, data = df) %>%
-  gf_function(function(x) 2 + 5*x) %>%
-  gf_square_resid_fun(function(x) 2 + 5*x)</code></pre>
+        <pre lang="r"><code>my_function <- function(X){-3.3295 + 0.9619*X }
+
+gf_jitter(Thumb ~ Height, data = Fingers) %>%
+   gf_function(my_function) %>%
+   gf_squaresid_fun(my_function, color = "red", alpha = 0.2)</code></pre>
       </td>
     </tr>
     <tr>
       <td><code>add_sd_ruler()</code></td>
-      <td>Adds a vertical or horizontal <b>SD ruler</b> (red line) to a plot, with optional text label.</td>
+      <td>Adds a vertical or horizontal <b>SD ruler</b> (red line) to a plot.</td>
       <td>
-        <pre lang="r"><code>gf_point(Thumb ~ Height, data = Fingers) %>%
-  add_sd_ruler(Thumb, legend_x = 65, legend_y = 50)</code></pre>
+        <pre lang="r"><code>tba</code></pre>
       </td>
     </tr>
     <tr>

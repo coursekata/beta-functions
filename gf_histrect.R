@@ -20,8 +20,8 @@
 #'
 #' @usage
 #' gf_histrect(x, data = NULL, binwidth = NULL, origin = NULL,
-#'             boundary = NULL, fill = "steelblue", color = "black",
-#'             na.rm = TRUE, mincount = NULL,
+#'             boundary = NULL, fill = "#7fcecc", color = "black",
+#'             alpha = 1, na.rm = TRUE, mincount = NULL,
 #'             bars = c("none", "outline", "solid"),
 #'             xbreaks = NULL)
 #'
@@ -35,8 +35,11 @@
 #'   one bin edge will be exactly at `boundary`, and other bins are spaced
 #'   by `binwidth` from there.
 #' @param fill Fill color for rectangles and (optionally) the histogram bars.
+#'   Default is `"#7fcecc"`.
 #' @param color Color for *bar outlines* when `bars = "outline"` or `"solid"`.
 #'   Note: **unit rectangles always use white borders** so internal grid lines remain clear.
+#' @param alpha Transparency level for the unit rectangles and (when `bars = "solid"`)
+#'   the bar fill. Between 0 (fully transparent) and 1 (fully opaque).
 #' @param na.rm Logical; whether to remove `NA` values.
 #' @param mincount Minimum height of the y-axis (in count units).
 #'   Useful to keep rectangles from looking extremely tall for small sample sizes.
@@ -77,7 +80,12 @@
 #' gf_histrect(~ b1, data = sdob1, bars = "outline", color = "red")
 #'
 #' # Solid histogram bars (stage 3)
-#' gf_histrect(~ b1, data = sdob1, bars = "solid", fill = "orange")
+#' gf_histrect(~ b1, data = sdob1, bars = "solid")
+#'
+#' # Use custom fill and alpha
+#' gf_histrect(~ b1, data = sdob1,
+#'             fill = "orange", alpha = 0.6,
+#'             bars = "outline")
 #'
 #' # Slightly denser x-axis ticks (about 10)
 #' gf_histrect(~ b1, data = sdob1, xbreaks = 10)
@@ -100,8 +108,9 @@ gf_histrect <- function(x,
                         binwidth = NULL,
                         origin   = NULL,
                         boundary = NULL,
-                        fill     = "steelblue",
+                        fill     = "#7fcecc",
                         color    = "black",   # bar outline color
+                        alpha    = 1,
                         na.rm    = TRUE,
                         mincount = NULL,
                         bars     = c("none", "outline", "solid"),
@@ -216,7 +225,8 @@ gf_histrect <- function(x,
         aes(xmin = xmin, xmax = xmax,
             ymin = ymin, ymax = ymax),
         fill   = fill,
-        color  = "white"
+        color  = "white",
+        alpha  = alpha
       )
   }
 
@@ -229,7 +239,8 @@ gf_histrect <- function(x,
             ymin = 0, ymax = count),
         fill     = if (bars == "solid") fill else NA,
         color    = color,      # bar outlines use color=
-        linewidth = 0.7
+        linewidth = 0.7,
+        alpha    = if (bars == "solid") alpha else 1
       )
   }
 

@@ -3,27 +3,31 @@
 #' @description
 #' `gf_squareplot()` creates a histogram-like plot where **each individual
 #' observation** is represented as a **small rectangle**, stacked vertically
-#' to show bin counts.  
+#' to show bin counts.
 #'
 #' It is designed for teaching:
 #'
-#' * how individual values (e.g., bootstrap b1s) accumulate into histogram bars  
-#' * the conceptual progression:  
-#'     **unit blocks → bar outlines → solid histogram**  
-#' * how sampling distributions acquire their overall shape  
+#' * how individual values (e.g., bootstrap b1s) accumulate into histogram bars
+#' * the conceptual progression:
+#'     **unit blocks → bar outlines → solid histogram**
+#' * how sampling distributions acquire their overall shape
 #'
 #' Three visualization modes are provided:
 #'
-#' * `"none"` – only individual rectangles (default)  
-#' * `"outline"` – rectangles + histogram bar outline  
-#' * `"solid"` – solid histogram bars, hiding rectangles  
+#' * `"none"` – only individual rectangles (default)
+#' * `"outline"` – rectangles + histogram bar outline
+#' * `"solid"` – solid histogram bars, hiding rectangles
+#'
+#' Optionally, `show_dgp = TRUE` overlays an annotated “Data Generating Process”
+#' axis above the plot, visually linking the sampling distribution of estimates
+#' to the underlying population model.
 #'
 #' @usage
 #' gf_squareplot(x, data = NULL, binwidth = NULL, origin = NULL,
 #'               boundary = NULL, fill = "#7fcecc", color = "black",
 #'               alpha = 1, na.rm = TRUE, mincount = NULL,
 #'               bars = c("none", "outline", "solid"),
-#'               xbreaks = NULL)
+#'               xbreaks = NULL, show_dgp = FALSE)
 #'
 #' @param x A numeric vector, or a one-sided formula such as `~b1`
 #'   (with `data=` supplied).
@@ -41,23 +45,27 @@
 #' @param mincount Ensures the y-axis extends to at least this many counts.
 #'   Prevents extremely tall blocks for small samples.
 #' @param bars Mode: `"none"` (unit blocks only), `"outline"`, or `"solid"`.
-#' @param xbreaks Controls x-axis tick locations.  
-#'   * `NULL` (default): choose ~8 readable ticks with `pretty()`  
-#'   * one number (e.g. `10`): ask for that many pretty breaks  
-#'   * numeric vector: explicit tick positions  
+#' @param xbreaks Controls x-axis tick locations.
+#'   * `NULL` (default): choose ~8 readable ticks with `pretty()`
+#'   * one number (e.g. `10`): ask for that many pretty breaks
+#'   * numeric vector: explicit tick positions
+#' @param show_dgp Logical; if `TRUE`, adds a dark-blue “Data Generating Process (DGP)”
+#'   axis above the plot, labels it with the population model
+#'   \(Y_i = \beta_0 + \beta_1 X_i + \epsilon_i\), and highlights 0 on that axis
+#'   with a red box labeled \(\beta_1\). Also recolors the bottom x-axis in the
+#'   same dark blue and relabels it as the parameter estimate with the same model
+#'   equation below.
 #'
 #' @details
 #' The plot is designed to help students see:
 #'
-#' 1. **Each block is one sample statistic**  
-#' 2. Blocks accumulate into **bars**  
-#' 3. Bars transition into the familiar **histogram**  
+#' 1. **Each block is one sample statistic**
+#' 2. Blocks accumulate into **bars**
+#' 3. Bars transition into the familiar **histogram**
 #'
-#' This supports conceptual understanding of distributions built from repeated
-#' sampling or simulation.
-#'
-#' Internal spacing uses white horizontal borders to keep counts visually separated.
-#' `mincount` guarantees enough vertical room.  
+#' With `show_dgp = TRUE`, the sampling distribution is explicitly tied to a
+#' population-level “data generating process” axis, reinforcing the idea that
+#' the distribution of estimates is centered around a parameter.
 #'
 #' @examples
 #' # Using a numeric vector
@@ -89,6 +97,11 @@
 #'               binwidth = 5, boundary = 0,
 #'               xbreaks = seq(-40, 40, 5))
 #'
+#' # Show the DGP axis and link between parameter and estimates
+#' gf_squareplot(~ b1, data = sdob1,
+#'               binwidth = 2, boundary = 0,
+#'               show_dgp = TRUE)
+#'
 #' @export
 #'
 
@@ -106,9 +119,11 @@ gf_squareplot <- function(x,
                           na.rm    = TRUE,
                           mincount = NULL,
                           bars     = c("none", "outline", "solid"),
-                          xbreaks  = NULL) {
+                          xbreaks  = NULL,
+                          show_dgp = FALSE) {
 
   bars <- match.arg(bars)
+  dgp_color <- "#004f8f"   # dark blue for DGP and parameter axis
 
   # --- extract numeric x_vec ---
   is_formula <- inherits(x, "formula")
@@ -173,7 +188,11 @@ gf_squareplot <- function(x,
   # --- y-axis extent with mincount ---
   max_plot_count <- max(max_count, mincount %||% max_count)
 
-  # --- readable y-axis tick steps ---
+  # extra vertical room if DGP axis is shown
+  extra_space <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
+  y_upper     <- max_plot_count + extra_space
+
+  # --- readable y-axis tick steps (only up to max_plot_count) ---
   if (max_plot_count <= 10) {
     step_y <- 1
   } else if (max_plot_count <= 20) {
@@ -214,7 +233,7 @@ gf_squareplot <- function(x,
         aes(xmin = xmin, xmax = xmax,
             ymin = ymin, ymax = ymax),
         fill   = fill,
-        color  = "white",   # keep internal grid lines clean
+        color  = "white",   # internal grid lines
         alpha  = alpha
       )
   }
@@ -233,14 +252,35 @@ gf_squareplot <- function(x,
       )
   }
 
-  # --- 3. Axes + theme ---
-  p +
+  # --- x-axis label: generic or DGP-aware ---
+  x_lab <- if (show_dgp) {
+    # Two-line label: "Parameter Estimate" + model equation
+    expression(
+      atop("Parameter Estimate",
+           Y[i] == beta[0] + beta[1] * X[i] + epsilon[i])
+    )
+  } else {
+    x_label
+  }
+
+  axis_text_x_color  <- if (show_dgp) dgp_color else "black"
+  axis_title_x_color <- if (show_dgp) dgp_color else "black"
+
+  base_theme <- theme_minimal() +
+    theme(
+      axis.line.x  = element_line(color = axis_text_x_color),
+      axis.line.y  = element_line(color = "black"),
+      axis.text.x  = element_text(color = axis_text_x_color),
+      axis.title.x = element_text(color = axis_title_x_color)
+    )
+
+  p <- p +
     labs(
-      x = x_label,
+      x = x_lab,
       y = "count"
     ) +
     scale_y_continuous(
-      limits = c(0, max_plot_count),
+      limits = c(0, y_upper),
       breaks = breaks_y,
       labels = breaks_y
     ) +
@@ -248,5 +288,74 @@ gf_squareplot <- function(x,
       breaks = breaks_x,
       labels = breaks_x
     ) +
-    theme_minimal()
+    base_theme
+
+  # --- 3. Optional DGP axis and annotations ---
+  if (show_dgp) {
+    # positions above the top of the bar region
+    axis_y   <- max_plot_count + extra_space * 0.25
+    eq_y     <- max_plot_count + extra_space * 0.5
+    title_y  <- max_plot_count + extra_space * 0.8
+
+    x_min <- min(breaks_x)
+    x_max <- max(breaks_x)
+
+    # DGP axis line
+    p <- p +
+      annotate(
+        "segment",
+        x = x_min, xend = x_max,
+        y = axis_y, yend = axis_y,
+        color = dgp_color,
+        linewidth = 0.7
+      ) +
+      # DGP title (left-justified)
+      annotate(
+        "text",
+        x = x_min, y = title_y,
+        label = "Data Generating Process (DGP)",
+        hjust = 0, vjust = 0,
+        color = dgp_color,
+        size = 3.5
+      ) +
+      # DGP model equation
+      annotate(
+        "text",
+        x = x_min, y = eq_y,
+        label = "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]",
+        hjust = 0, vjust = 0.5,
+        color = dgp_color,
+        size = 3.5,
+        parse = TRUE
+      )
+
+    # Red box at 0 on the DGP axis, labeled beta[1],
+    # but only if 0 is within the visible x-range
+    if (0 >= x_min && 0 <= x_max) {
+      box_half_width  <- binwidth * 0.3
+      box_half_height <- extra_space * 0.15
+
+      p <- p +
+        annotate(
+          "rect",
+          xmin  = 0 - box_half_width,
+          xmax  = 0 + box_half_width,
+          ymin  = axis_y - box_half_height,
+          ymax  = axis_y + box_half_height,
+          color = "red3",
+          fill  = NA,
+          linewidth = 0.7
+        ) +
+        annotate(
+          "text",
+          x = 0, y = axis_y,
+          label = "beta[1]",
+          color = "red3",
+          size  = 3.5,
+          parse = TRUE
+        )
+    }
+  }
+
+  p
 }

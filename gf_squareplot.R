@@ -188,21 +188,17 @@ gf_squareplot <- function(x,
 
   # --- base theme & axes -----------------------------------------------------
 
- base_theme <- theme_minimal() +
+base_theme <- theme_minimal() +
   theme(
-    # x-axis line
     axis.line.x  = element_line(color = if (show_dgp) dgp_color else "black"),
-
-    # y-axis line
     axis.line.y  = element_line(color = "black"),
 
-    # x-axis labels (THE IMPORTANT FIX)
+    # FIX: put tick labels back where they belong 
     axis.text.x  = element_text(
       color = if (show_dgp) dgp_color else "black",
-      vjust = 1.5             # <<< THIS puts labels BELOW the axis
+      vjust = 1   # <-- normal below-axis position
     ),
 
-    # no automatic x-axis title when show_dgp = TRUE
     axis.title.x = if (show_dgp) element_blank() else element_text(color = "black")
   )
 

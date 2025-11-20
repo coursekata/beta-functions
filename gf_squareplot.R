@@ -188,13 +188,23 @@ gf_squareplot <- function(x,
 
   # --- base theme & axes -----------------------------------------------------
 
-  base_theme <- theme_minimal() +
-    theme(
-      axis.line.x  = element_line(color = if (show_dgp) dgp_color else "black"),
-      axis.line.y  = element_line(color = "black"),
-      axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
-      axis.title.x = if (show_dgp) element_blank() else element_text(color = "black")
-    )
+ base_theme <- theme_minimal() +
+  theme(
+    # x-axis line
+    axis.line.x  = element_line(color = if (show_dgp) dgp_color else "black"),
+
+    # y-axis line
+    axis.line.y  = element_line(color = "black"),
+
+    # x-axis labels (THE IMPORTANT FIX)
+    axis.text.x  = element_text(
+      color = if (show_dgp) dgp_color else "black",
+      vjust = 1.5             # <<< THIS puts labels BELOW the axis
+    ),
+
+    # no automatic x-axis title when show_dgp = TRUE
+    axis.title.x = if (show_dgp) element_blank() else element_text(color = "black")
+  )
 
   p <- p +
     labs(x = if (show_dgp) NULL else x_label, y = "count") +

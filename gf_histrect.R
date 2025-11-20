@@ -2,91 +2,110 @@
 #'
 #' @description
 #' `gf_histrect()` creates a histogram where **each individual observation** is
-#' represented as a **small rectangle**—stacked to show bin counts.  
+#' represented as a **small rectangle**—stacked to show bin counts.
 #'
 #' This visualization is designed for teaching:
 #'
-#' * how individual values (e.g., bootstrap b1s) accumulate into histogram bars  
-#' * the transition from **one block = one sample statistic** → bar outlines → solid histogram  
+#' * how individual values (e.g., bootstrap b1s) accumulate into histogram bars
+#' * the transition from **one block = one sample statistic** → bar outlines → solid histogram
 #' * how the shape of a sampling distribution emerges from the underlying values
 #'
 #' It supports three display modes using the `bars` argument:
 #'
-#' * `"none"` – (default) only individual rectangles, no bars  
-#' * `"outline"` – rectangles + histogram bar outline  
-#' * `"solid"` – solid histogram bars, hiding the rectangles  
+#' * `"none"` – (default) only individual rectangles, no bars
+#' * `"outline"` – rectangles + histogram bar outline
+#' * `"solid"` – solid histogram bars, hiding the rectangles
 #'
 #' This allows instructors to reveal the histogram conceptually in stages.
 #'
-#'
 #' @usage
 #' gf_histrect(x, data = NULL, binwidth = NULL, origin = NULL,
-#'             fill = "steelblue", color = "black",
+#'             boundary = NULL, fill = "steelblue", color = "black",
 #'             na.rm = TRUE, mincount = NULL,
-#'             bars = c("none", "outline", "solid"))
-#'
+#'             bars = c("none", "outline", "solid"),
+#'             xbreaks = NULL)
 #'
 #' @param x A numeric vector, **or** a one-sided formula like `~b1` (with `data=`).
 #' @param data A data frame (needed only when using the formula interface).
-#' @param binwidth Width of each histogram bin. Defaults to approx. 30 bins.
-#' @param origin Left boundary of the first bin. Defaults to a multiple of binwidth.
+#' @param binwidth Width of each histogram bin. Defaults to approx. 30 bins over the data range.
+#' @param origin Left boundary of the first bin. Defaults to a multiple of `binwidth`
+#'   based on the minimum of `x`. Ignored if `boundary` is supplied.
+#' @param boundary A bin boundary (edge) used to align the bins, similar to
+#'   `geom_histogram(boundary = ...)`. When supplied, it overrides `origin`:
+#'   one bin edge will be exactly at `boundary`, and other bins are spaced
+#'   by `binwidth` from there.
 #' @param fill Fill color for rectangles and (optionally) the histogram bars.
 #' @param color Color for *bar outlines* when `bars = "outline"` or `"solid"`.
-#'        Note: **unit rectangles always use white borders** so internal grid lines remain clear.
+#'   Note: **unit rectangles always use white borders** so internal grid lines remain clear.
 #' @param na.rm Logical; whether to remove `NA` values.
-#' @param mincount Minimum height of the y-axis (in count units).  
-#'        Useful to keep rectangles from looking extremely tall for small sample sizes.
-#' @param bars `"none"` (default), `"outline"`, or `"solid"`.  
-#'        Controls transition from unit-blocks → bar-outline → solid histogram.
-#'
+#' @param mincount Minimum height of the y-axis (in count units).
+#'   Useful to keep rectangles from looking extremely tall for small sample sizes.
+#' @param bars `"none"` (default), `"outline"`, or `"solid"`.
+#'   Controls the transition from unit-blocks → bar-outline → solid histogram.
+#' @param xbreaks Controls x-axis tick marks. Options:
+#'   * `NULL` (default): use about 8 "pretty" breaks over the data range.
+#'   * a single number (e.g. `10`): ask for about that many pretty breaks.
+#'   * a numeric vector: explicit tick positions (e.g. `seq(-40, 40, 5)`).
 #'
 #' @details
-#' This function is pedagogically motivated.  
-#' It allows students to:
+#' This function is pedagogically motivated. It allows students to:
 #'
-#' 1. **Count the blocks** representing individual sample statistics.  
-#' 2. See how blocks accumulate into **bar shapes**.  
+#' 1. **Count the blocks** representing individual sample statistics.
+#' 2. See how blocks accumulate into **bar shapes**.
 #' 3. Finally view the **formal histogram** by transitioning to `"outline"` or `"solid"`.
 #'
-#' The axis scaling, tick spacing, and minimum height logic are designed
-#' to avoid visual distortion with small samples.
+#' The y-axis scaling, tick spacing, and optional `mincount` padding are designed
+#' to avoid visual distortion with small samples. The x-axis ticks use `pretty()`
+#' by default for a slightly denser and more readable set of labels than the
+#' ggplot2 default, while still allowing full control via `xbreaks`.
 #'
+#' The `boundary` argument lets you align bin edges in a controlled way, e.g.
+#' to ensure a bin edge is exactly at 0, or at some meaningful value, mirroring
+#' the behavior of `geom_histogram(boundary = ...)`.
 #'
 #' @examples
 #' # Using a vector
 #' gf_histrect(sdob1$b1)
 #'
 #' # Formula interface
-#' gf_histrect(~b1, data = sdob1)
+#' gf_histrect(~ b1, data = sdob1)
 #'
 #' # Guarantee the y-axis goes to at least 15 counts
-#' gf_histrect(~b1, data = sdob1, mincount = 15)
+#' gf_histrect(~ b1, data = sdob1, mincount = 15)
 #'
 #' # Add bar outline (stage 2 of the conceptual reveal)
-#' gf_histrect(~b1, data = sdob1, bars = "outline", color = "red")
+#' gf_histrect(~ b1, data = sdob1, bars = "outline", color = "red")
 #'
-#' # Solid histogram bars
-#' gf_histrect(~b1, data = sdob1, bars = "solid", fill = "orange")
+#' # Solid histogram bars (stage 3)
+#' gf_histrect(~ b1, data = sdob1, bars = "solid", fill = "orange")
+#'
+#' # Slightly denser x-axis ticks (about 10)
+#' gf_histrect(~ b1, data = sdob1, xbreaks = 10)
+#'
+#' # Explicit x-axis ticks every 5 units, with aligned bin edges
+#' gf_histrect(~ b1, data = sdob1,
+#'             binwidth = 5, boundary = 0,
+#'             xbreaks = seq(-40, 40, 5))
 #'
 #' # Add any ggplot theme
-#' gf_histrect(~b1, data = sdob1) + theme_classic()
-#'
+#' gf_histrect(~ b1, data = sdob1) + ggplot2::theme_classic()
 #'
 #' @export
 #'
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
-
 gf_histrect <- function(x,
                         data     = NULL,
                         binwidth = NULL,
                         origin   = NULL,
+                        boundary = NULL,
                         fill     = "steelblue",
                         color    = "black",   # bar outline color
                         na.rm    = TRUE,
                         mincount = NULL,
-                        bars     = c("none", "outline", "solid")) {
+                        bars     = c("none", "outline", "solid"),
+                        xbreaks  = NULL) {
 
   bars <- match.arg(bars)
 
@@ -113,9 +132,14 @@ gf_histrect <- function(x,
     binwidth <- if (diff(rng) == 0) 1 else diff(rng) / 30
   }
 
-  # --- choose origin ---
-  if (is.null(origin)) {
-    origin <- floor(min(x_vec) / binwidth) * binwidth
+  # --- choose origin / boundary anchor ---
+  # If boundary is supplied, align a bin edge at that value (like geom_histogram).
+  if (!is.null(boundary)) {
+    origin <- boundary
+  } else {
+    if (is.null(origin)) {
+      origin <- floor(min(x_vec) / binwidth) * binwidth
+    }
   }
 
   # --- assign bins ---
@@ -145,19 +169,39 @@ gf_histrect <- function(x,
   # --- y-axis extent with mincount ---
   max_plot_count <- max(max_count, mincount %||% max_count)
 
-  # --- choose readable tick spacing ---
+  # --- choose readable y tick spacing ---
   if (max_plot_count <= 10) {
-    step <- 1
+    step_y <- 1
   } else if (max_plot_count <= 20) {
-    step <- 2
+    step_y <- 2
   } else if (max_plot_count <= 50) {
-    step <- 5
+    step_y <- 5
   } else if (max_plot_count <= 100) {
-    step <- 10
+    step_y <- 10
   } else {
-    step <- ceiling(max_plot_count / 10)
+    step_y <- ceiling(max_plot_count / 10)
   }
-  breaks <- seq(0, max_plot_count, by = step)
+  breaks_y <- seq(0, max_plot_count, by = step_y)
+
+  # --- x-axis range and breaks ---
+  rng_x <- range(x_vec)
+  if (diff(rng_x) == 0) {
+    # Avoid degenerate range for pretty()
+    rng_x <- rng_x + c(-0.5, 0.5)
+  }
+
+  if (is.null(xbreaks)) {
+    # default: about 8 nice breaks
+    breaks_x <- pretty(rng_x, n = 8)
+  } else if (is.numeric(xbreaks) && length(xbreaks) == 1L) {
+    # xbreaks = 10 → ask pretty() for ~10 breaks
+    breaks_x <- pretty(rng_x, n = xbreaks)
+  } else if (is.numeric(xbreaks)) {
+    # explicit vector of positions
+    breaks_x <- xbreaks
+  } else {
+    stop("`xbreaks` must be NULL, a single number, or a numeric vector.")
+  }
 
   library(ggplot2)
 
@@ -197,8 +241,12 @@ gf_histrect <- function(x,
     ) +
     scale_y_continuous(
       limits = c(0, max_plot_count),
-      breaks = breaks,
-      labels = breaks
+      breaks = breaks_y,
+      labels = breaks_y
+    ) +
+    scale_x_continuous(
+      breaks = breaks_x,
+      labels = breaks_x
     ) +
     theme_minimal()
 }

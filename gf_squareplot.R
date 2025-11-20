@@ -1,4 +1,54 @@
+#' gf_squareplot: A Countable-Rectangle Histogram for Teaching Sampling Distributions
+#'
+#' @description
+#' `gf_squareplot()` creates a histogram-like plot where **each individual
+#' observation** is represented as a **small rectangle**, stacked vertically
+#' to show bin counts.
+#'
+#' It is designed for teaching:
+#'
+#' * how individual values (e.g., bootstrap b1s) accumulate into histogram bars
+#' * the conceptual progression:
+#'     **unit blocks → bar outlines → solid histogram**
+#' * how sampling distributions acquire their overall shape
+#'
+#' Three visualization modes are provided:
+#'
+#' * `"none"` – only individual rectangles (default)
+#' * `"outline"` – rectangles + histogram bar outline
+#' * `"solid"` – solid histogram bars, hiding rectangles
+#'
+#' Optionally, `show_dgp = TRUE` overlays a dark-blue “Data Generating Process
+#' (DGP)” axis above the plot, labels it with the population model
+#' \(Y_i = \beta_0 + \beta_1 X_i + \epsilon_i\), and marks β₁ = 0 on that axis
+#' with a red tick mark and annotation box.
+#'
+#' @usage
+#' gf_squareplot(x, data = NULL, binwidth = NULL, origin = NULL,
+#'               boundary = NULL, fill = "#7fcecc", color = "black",
+#'               alpha = 1, na.rm = TRUE, mincount = NULL,
+#'               bars = c("none", "outline", "solid"),
+#'               xbreaks = NULL, show_dgp = FALSE)
+#'
+#' @param x A numeric vector, or a one-sided formula like `~b1`
+#' @param data A data frame (only used when `x` is a formula)
+#' @param binwidth Width of each histogram bin (default ~30 bins)
+#' @param origin Left boundary of first bin (ignored if `boundary` is used)
+#' @param boundary Value at which a bin edge must align (like geom_histogram)
+#' @param fill Fill color for blocks and solid bars
+#' @param color Outline color for bar outlines (unit blocks always use white)
+#' @param alpha Transparency (0–1)
+#' @param na.rm Drop missing values?
+#' @param mincount Minimum visible y-range for count axis
+#' @param bars `"none"`, `"outline"`, or `"solid"`
+#' @param xbreaks NULL (pretty), a number (# pretty breaks), or numeric vector
+#' @param show_dgp If TRUE, add the DGP axis, labels, and β₁=0 annotation
+#'
+#' @export
+#'
+
 `%||%` <- function(a, b) if (!is.null(a)) a else b
+
 
 gf_squareplot <- function(x,
                           data     = NULL,
@@ -17,12 +67,13 @@ gf_squareplot <- function(x,
   bars <- match.arg(bars)
   dgp_color <- "#004f8f"
 
-  # --- extract x vector ---
+  # --- extract x vector ------------------------------------------------------
+
   is_formula <- inherits(x, "formula")
   if (is_formula) {
     if (is.null(data)) stop("If `x` is a formula, supply `data=`.")
     vars <- all.vars(x)
-    if (length(vars) != 1L) stop("Formula must be ~var.")
+    if (length(vars) != 1L) stop("Formula must be of form ~var.")
     x_vec   <- data[[vars[1]]]
     x_label <- vars[1]
   } else {
@@ -34,20 +85,23 @@ gf_squareplot <- function(x,
   if (!is.numeric(x_vec)) stop("`x` must be numeric.")
   if (length(x_vec) == 0) stop("`x` has no non-missing values.")
 
-  # --- binwidth ---
+  # --- determine binwidth ----------------------------------------------------
+
   if (is.null(binwidth)) {
     rng <- range(x_vec)
     binwidth <- if (diff(rng) == 0) 1 else diff(rng) / 30
   }
 
-  # --- origin / boundary ---
+  # --- determine origin / boundary ------------------------------------------
+
   if (!is.null(boundary)) {
     origin <- boundary
   } else if (is.null(origin)) {
     origin <- floor(min(x_vec) / binwidth) * binwidth
   }
 
-  # --- bin assignment ---
+  # --- assign bins -----------------------------------------------------------
+
   bin  <- floor((x_vec - origin) / binwidth)
   xmin <- origin + bin * binwidth
   xmax <- xmin + binwidth
@@ -56,8 +110,9 @@ gf_squareplot <- function(x,
   ymin <- slot
   ymax <- slot + 1
 
-  rect_df <- data.frame(xmin = xmin, xmax = xmax,
-                        ymin = ymin, ymax = ymax)
+  rect_df <- data.frame(xmin, xmax, ymin, ymax)
+
+  # --- bar counts ------------------------------------------------------------
 
   if (nrow(rect_df) > 0) {
     bar_df <- aggregate(ymax ~ xmin + xmax, rect_df, max)
@@ -71,11 +126,13 @@ gf_squareplot <- function(x,
 
   max_plot_count <- max(max_count, mincount %||% max_count)
 
-  # extra room for the DGP overlay
-  extra_space <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
-  y_upper <- max_plot_count + extra_space
+  # --- vertical extension for DGP overlay ------------------------------------
 
-  # --- axis breaks (y) ---
+  extra_space <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
+  y_upper     <- max_plot_count + extra_space
+
+  # --- y-axis tick calculation -----------------------------------------------
+
   if (max_plot_count <= 10)      step_y <- 1
   else if (max_plot_count <= 20) step_y <- 2
   else if (max_plot_count <= 50) step_y <- 5
@@ -84,11 +141,11 @@ gf_squareplot <- function(x,
 
   breaks_y <- seq(0, max_plot_count, by = step_y)
 
-  # --- x-axis limits & breaks ---
+  # --- x-range and breaks -----------------------------------------------------
+
   rng_x <- range(x_vec)
   if (diff(rng_x) == 0) rng_x <- rng_x + c(-0.5, 0.5)
 
-  # force the x-scale limits so the DGP axis matches EXACTLY
   x_limits <- rng_x
 
   if (is.null(xbreaks)) {
@@ -102,7 +159,8 @@ gf_squareplot <- function(x,
   library(ggplot2)
   p <- ggplot()
 
-  # --- unit rectangles ---
+  # --- unit rectangles --------------------------------------------------------
+
   if (bars != "solid") {
     p <- p + geom_rect(
       data = rect_df,
@@ -111,7 +169,8 @@ gf_squareplot <- function(x,
     )
   }
 
-  # --- bar outlines or solids ---
+  # --- bar outlines / solid bars --------------------------------------------
+
   if (bars %in% c("outline", "solid") && nrow(bar_df) > 0) {
     p <- p + geom_rect(
       data = bar_df,
@@ -123,31 +182,37 @@ gf_squareplot <- function(x,
     )
   }
 
-  # --- axis labels ---
+  # --- bottom axis label -----------------------------------------------------
+
   x_lab <- if (show_dgp) {
-    expression(atop("Parameter Estimate",
-                    Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]))
+    expression(
+      atop("Parameter Estimate",
+           Y[i] == beta[0] + beta[1] * X[i] + epsilon[i])
+    )
   } else x_label
 
-  # LEFT-JUSTIFY the x-axis title when show_dgp = TRUE
   base_theme <- theme_minimal() +
     theme(
       axis.line.x  = element_line(color = if (show_dgp) dgp_color else "black"),
       axis.line.y  = element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
-      axis.title.x = element_text(hjust = 0,                 # <--- FIX 1
-                                  color = if (show_dgp) dgp_color else "black")
+      axis.title.x = element_text(
+        hjust      = 0,          # left-justify
+        lineheight = 0.80,       # tightened spacing between lines
+        color      = if (show_dgp) dgp_color else "black"
+      )
     )
 
   p <- p +
     labs(x = x_lab, y = "count") +
-    scale_y_continuous(limits = c(0, y_upper),
-                       breaks = breaks_y) +
-    scale_x_continuous(limits = x_limits,        # <--- FIX 3 (matching length)
-                       breaks = breaks_x) +
+    scale_y_continuous(limits = c(0, y_upper), breaks = breaks_y) +
+    scale_x_continuous(limits = x_limits, breaks = breaks_x) +
     base_theme
 
-  # --- DGP overlay ---
+  # ============================================================================
+  # DGP OVERLAY
+  # ============================================================================
+
   if (show_dgp) {
 
     x_min <- x_limits[1]
@@ -157,7 +222,8 @@ gf_squareplot <- function(x,
     eq_y    <- max_plot_count + extra_space * 0.50
     title_y <- max_plot_count + extra_space * 0.80
 
-    # blue DGP axis
+    # --- blue DGP axis --------------------------------------------------------
+
     p <- p + annotate(
       "segment",
       x = x_min, xend = x_max,
@@ -165,36 +231,64 @@ gf_squareplot <- function(x,
       color = dgp_color, linewidth = 0.8
     )
 
+    # --- title ---------------------------------------------------------------
+
     p <- p + annotate(
       "text", x = x_min, y = title_y,
       label = "Data Generating Process (DGP)",
       hjust = 0, vjust = 0,
-      size = 4, color = dgp_color
+      size  = 4, color = dgp_color
     )
+
+    # --- population model equation -------------------------------------------
 
     p <- p + annotate(
       "text", x = x_min, y = eq_y,
       label = "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]",
-      parse = TRUE,
-      hjust = 0, vjust = 0.5,
-      size = 4, color = dgp_color
+      parse  = TRUE,
+      hjust  = 0,
+      vjust  = 0.5,
+      size   = 4,
+      color  = dgp_color
     )
 
-    # --- FIX 2: PROPER RED β1 BOX ---
-    if (0 >= x_min && 0 <= x_max) {
-      box_w <- diff(x_limits) * 0.02
-      box_h <- extra_space * 0.18
+    # --- red β1 = 0 box + tick ------------------------------------------------
 
+    if (0 >= x_min && 0 <= x_max) {
+
+      tick_len <- extra_space * 0.20
+      box_h    <- extra_space * 0.18
+      box_w    <- diff(x_limits) * 0.02
+
+      # red tick mark pointing up from the DGP axis
+      p <- p + annotate(
+        "segment",
+        x = 0, xend = 0,
+        y = axis_y, yend = axis_y + tick_len,
+        color = "red3", linewidth = 0.7
+      )
+
+      # center of box above tick
+      box_center_y <- axis_y + tick_len + box_h * 1.1
+
+      # box + β1 = 0 text
       p <- p +
-        annotate("rect",
-                 xmin = 0 - box_w, xmax = 0 + box_w,
-                 ymin = axis_y - box_h, ymax = axis_y + box_h,
-                 color = "red3", fill = "white", alpha = 0.9, linewidth = 0.6) +
-        annotate("text",
-                 x = 0, y = axis_y,
-                 label = "beta[1]",
-                 parse = TRUE,
-                 size = 4, color = "red3")
+        annotate(
+          "rect",
+          xmin = 0 - box_w, xmax = 0 + box_w,
+          ymin = box_center_y - box_h,
+          ymax = box_center_y + box_h,
+          color = "red3", fill = "white",
+          linewidth = 0.7
+        ) +
+        annotate(
+          "text",
+          x = 0, y = box_center_y,
+          label = "beta[1] == 0",
+          parse = TRUE,
+          size  = 4,
+          color = "red3"
+        )
     }
   }
 

@@ -21,7 +21,8 @@
 #' Optionally, `show_dgp = TRUE` overlays a dark-blue “Data Generating Process
 #' (DGP)” axis above the plot, labels it with the population model
 #' \(Y_i = \beta_0 + \beta_1 X_i + \epsilon_i\), and marks β₁ = 0 on that axis
-#' with a red tick mark and annotation box.
+#' with a red tick mark and annotation box. The bottom axis is labeled as a
+#' parameter estimate, with an additional red “b₁” centered under the axis.
 #'
 #' @usage
 #' gf_squareplot(x, data = NULL, binwidth = NULL, origin = NULL,
@@ -146,7 +147,7 @@ gf_squareplot <- function(x,
   rng_x <- range(x_vec)
   if (diff(rng_x) == 0) rng_x <- rng_x + c(-0.5, 0.5)
 
-  x_limits <- rng_x
+  x_limits <- rng_x   # used for both x-axis and DGP axis
 
   if (is.null(xbreaks)) {
     breaks_x <- pretty(x_limits, n = 8)
@@ -197,7 +198,7 @@ gf_squareplot <- function(x,
       axis.line.y  = element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
       axis.title.x = element_text(
-        hjust      = 0,          # left-justify
+        hjust      = 0,          # left-justify the two-line label
         lineheight = 0.70,       # tighter spacing between the two lines
         color      = if (show_dgp) dgp_color else "black"
       )
@@ -207,20 +208,21 @@ gf_squareplot <- function(x,
     labs(x = x_lab, y = "count") +
     scale_y_continuous(limits = c(0, y_upper), breaks = breaks_y) +
     scale_x_continuous(limits = x_limits, breaks = breaks_x) +
-    base_theme
+    base_theme +
+    coord_cartesian(clip = "off")  # allow annotations slightly outside panel
 
   # ============================================================================
   # DGP OVERLAY
   # ============================================================================
 
+  x_min <- x_limits[1]
+  x_max <- x_limits[2]
+
   if (show_dgp) {
 
-    x_min <- x_limits[1]
-    x_max <- x_limits[2]
-
     axis_y  <- max_plot_count + extra_space * 0.25
-    eq_y    <- max_plot_count + extra_space * 0.50
-    title_y <- max_plot_count + extra_space * 0.80
+    eq_y    <- max_plot_count + extra_space * 0.55
+    title_y <- max_plot_count + extra_space * 0.85
 
     # --- blue DGP axis --------------------------------------------------------
 
@@ -231,7 +233,7 @@ gf_squareplot <- function(x,
       color = dgp_color, linewidth = 0.8
     )
 
-    # --- title ---------------------------------------------------------------
+    # --- DGP title -----------------------------------------------------------
 
     p <- p + annotate(
       "text", x = x_min, y = title_y,
@@ -252,13 +254,13 @@ gf_squareplot <- function(x,
       color  = dgp_color
     )
 
-    # --- red β1 = 0 box + tick ------------------------------------------------
+    # --- red β1 = 0 box + tick at 0 ------------------------------------------
 
     if (0 >= x_min && 0 <= x_max) {
 
-      tick_len <- extra_space * 0.12    # shorter tick
-      box_h    <- extra_space * 0.25
-      box_w    <- diff(x_limits) * 0.05 # wider box so label fits
+      tick_len <- extra_space * 0.20
+      box_h    <- extra_space * 0.18
+      box_w    <- diff(x_limits) * 0.02
 
       # red tick mark pointing up from the DGP axis
       p <- p + annotate(
@@ -269,7 +271,7 @@ gf_squareplot <- function(x,
       )
 
       # center of box above tick
-      box_center_y <- axis_y + tick_len + box_h * 1.05
+      box_center_y <- axis_y + tick_len + box_h * 1.1
 
       # box + β1 = 0 text
       p <- p +
@@ -290,6 +292,23 @@ gf_squareplot <- function(x,
           color = "red3"
         )
     }
+  }
+
+  # ============================================================================
+  # Bottom red b₁ label (centered at 0 under the x-axis)
+  # ============================================================================
+
+  # Place b1 just below the axis line (using coord_cartesian(clip = "off"))
+  if (0 >= x_min && 0 <= x_max) {
+    b1_y <- -0.06 * y_upper  # small distance below axis
+    p <- p + annotate(
+      "text",
+      x = 0, y = b1_y,
+      label = "b[1]",
+      parse = TRUE,
+      size  = 4,
+      color = "red3"
+    )
   }
 
   p

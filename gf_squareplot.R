@@ -21,8 +21,8 @@
 #' Optionally, `show_dgp = TRUE` overlays a dark-blue “Data Generating Process
 #' (DGP)” axis above the plot, labels it with the population model
 #' \(Y_i = \beta_0 + \beta_1 X_i + \epsilon_i\), and marks β₁ = 0 on that axis
-#' with a red tick mark and annotation box. The bottom axis is labeled as a
-#' parameter estimate, with an additional red “b₁” centered under the axis.
+#' with a red tick mark and label. The bottom axis is labeled as a parameter
+#' estimate, with a red `b₁` centered under the axis at 0.
 #'
 #' @usage
 #' gf_squareplot(x, data = NULL, binwidth = NULL, origin = NULL,
@@ -127,10 +127,13 @@ gf_squareplot <- function(x,
 
   max_plot_count <- max(max_count, mincount %||% max_count)
 
-  # --- vertical extension for DGP overlay ------------------------------------
+  # --- vertical extension for DGP overlay & bottom labels --------------------
 
-  extra_space <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
-  y_upper     <- max_plot_count + extra_space
+  extra_top    <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
+  extra_bottom <- if (show_dgp) max(3, 0.15 * max_plot_count) else 0
+
+  y_upper <- max_plot_count + extra_top
+  y_lower <- if (show_dgp) -extra_bottom else 0
 
   # --- y-axis tick calculation -----------------------------------------------
 
@@ -142,7 +145,7 @@ gf_squareplot <- function(x,
 
   breaks_y <- seq(0, max_plot_count, by = step_y)
 
-  # --- x-range and breaks -----------------------------------------------------
+  # --- x-range and breaks ----------------------------------------------------
 
   rng_x <- range(x_vec)
   if (diff(rng_x) == 0) rng_x <- rng_x + c(-0.5, 0.5)
@@ -160,7 +163,7 @@ gf_squareplot <- function(x,
   library(ggplot2)
   p <- ggplot()
 
-  # --- unit rectangles --------------------------------------------------------
+  # --- unit rectangles -------------------------------------------------------
 
   if (bars != "solid") {
     p <- p + geom_rect(
@@ -183,36 +186,27 @@ gf_squareplot <- function(x,
     )
   }
 
-  # --- bottom axis label -----------------------------------------------------
-
-  x_lab <- if (show_dgp) {
-    expression(
-      atop("Parameter Estimate",
-           Y[i] == beta[0] + beta[1] * X[i] + epsilon[i])
-    )
-  } else x_label
+  # --- base theme & axes -----------------------------------------------------
 
   base_theme <- theme_minimal() +
     theme(
       axis.line.x  = element_line(color = if (show_dgp) dgp_color else "black"),
       axis.line.y  = element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
-      axis.title.x = element_text(
-        hjust      = 0,          # left-justify the two-line label
-        lineheight = 0.70,       # tighter spacing between the two lines
-        color      = if (show_dgp) dgp_color else "black"
-      )
+      axis.title.x = if (show_dgp) element_blank() else element_text(color = "black")
     )
 
   p <- p +
-    labs(x = x_lab, y = "count") +
-    scale_y_continuous(limits = c(0, y_upper), breaks = breaks_y) +
+    labs(x = if (show_dgp) NULL else x_label, y = "count") +
+    scale_y_continuous(limits = c(y_lower, y_upper),
+                       breaks = breaks_y,
+                       labels = breaks_y) +
     scale_x_continuous(limits = x_limits, breaks = breaks_x) +
     base_theme +
-    coord_cartesian(clip = "off")  # allow annotations slightly outside panel
+    coord_cartesian(clip = "off")
 
   # ============================================================================
-  # DGP OVERLAY
+  # DGP OVERLAY (top)
   # ============================================================================
 
   x_min <- x_limits[1]
@@ -220,11 +214,11 @@ gf_squareplot <- function(x,
 
   if (show_dgp) {
 
-    axis_y  <- max_plot_count + extra_space * 0.25
-    eq_y    <- max_plot_count + extra_space * 0.55
-    title_y <- max_plot_count + extra_space * 0.85
+    axis_y  <- max_plot_count + extra_top * 0.25
+    eq_y    <- max_plot_count + extra_top * 0.55
+    title_y <- max_plot_count + extra_top * 0.85
 
-    # --- blue DGP axis --------------------------------------------------------
+    # --- blue DGP axis (same width as x-axis) --------------------------------
 
     p <- p + annotate(
       "segment",
@@ -242,7 +236,7 @@ gf_squareplot <- function(x,
       size  = 4, color = dgp_color
     )
 
-    # --- population model equation -------------------------------------------
+    # --- population model equation (top) -------------------------------------
 
     p <- p + annotate(
       "text", x = x_min, y = eq_y,
@@ -254,61 +248,77 @@ gf_squareplot <- function(x,
       color  = dgp_color
     )
 
-    # --- red β1 = 0 box + tick at 0 ------------------------------------------
+    # --- red β1 = 0 tick + label at 0 on DGP axis ----------------------------
 
     if (0 >= x_min && 0 <= x_max) {
 
-      tick_len <- extra_space * 0.20
-      box_h    <- extra_space * 0.18
-      box_w    <- diff(x_limits) * 0.02
+      tick_len <- extra_top * 0.20
+      tick_top <- axis_y + tick_len
 
       # red tick mark pointing up from the DGP axis
       p <- p + annotate(
         "segment",
         x = 0, xend = 0,
-        y = axis_y, yend = axis_y + tick_len,
+        y = axis_y, yend = tick_top,
         color = "red3", linewidth = 0.7
       )
 
-      # center of box above tick
-      box_center_y <- axis_y + tick_len + box_h * 1.1
+      # label slightly above the tick
+      label_y <- tick_top + extra_top * 0.10
 
-      # box + β1 = 0 text
-      p <- p +
-        annotate(
-          "rect",
-          xmin = 0 - box_w, xmax = 0 + box_w,
-          ymin = box_center_y - box_h,
-          ymax = box_center_y + box_h,
-          color = "red3", fill = "white",
-          linewidth = 0.7
-        ) +
-        annotate(
-          "text",
-          x = 0, y = box_center_y,
-          label = "beta[1] == 0",
-          parse = TRUE,
-          size  = 4,
-          color = "red3"
-        )
+      p <- p + annotate(
+        "text",
+        x = 0, y = label_y,
+        label = "beta[1] == 0",
+        parse = TRUE,
+        size  = 4,
+        color = "red3"
+      )
     }
   }
 
   # ============================================================================
-  # Bottom red b₁ label (centered at 0 under the x-axis)
+  # Bottom teaching labels (Parameter Estimate + equation + red b1)
   # ============================================================================
 
-  # Place b1 just below the axis line (using coord_cartesian(clip = "off"))
-  if (0 >= x_min && 0 <= x_max) {
-    b1_y <- -0.06 * y_upper  # small distance below axis
+  if (show_dgp) {
+    # Place bottom labels just below the axis, left-justified at x_min
+    bottom_title_y <- -extra_bottom * 0.25
+    bottom_eq_y    <- -extra_bottom * 0.55
+
+    # "Parameter Estimate" (plain text)
     p <- p + annotate(
       "text",
-      x = 0, y = b1_y,
-      label = "b[1]",
-      parse = TRUE,
+      x = x_min, y = bottom_title_y,
+      label = "Parameter Estimate",
+      hjust = 0, vjust = 1,
       size  = 4,
-      color = "red3"
+      color = dgp_color
     )
+
+    # Population model equation (bottom)
+    p <- p + annotate(
+      "text",
+      x = x_min, y = bottom_eq_y,
+      label = "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]",
+      parse = TRUE,
+      hjust = 0, vjust = 1,
+      size  = 4,
+      color = dgp_color
+    )
+
+    # Red b1 label centered under the axis at x = 0 (no tick)
+    if (0 >= x_min && 0 <= x_max) {
+      b1_y <- -extra_bottom * 0.95
+      p <- p + annotate(
+        "text",
+        x = 0, y = b1_y,
+        label = "b[1]",
+        parse = TRUE,
+        size  = 4,
+        color = "red3"
+      )
+    }
   }
 
   p

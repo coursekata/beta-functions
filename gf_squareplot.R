@@ -127,10 +127,13 @@ gf_squareplot <- function(x,
 
   max_plot_count <- max(max_count, mincount %||% max_count)
 
-  # --- vertical extension for DGP overlay (top) ------------------------------
+  # --- vertical extension for DGP overlay (top) and bottom labels ------------
 
-  extra_top <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
-  y_upper   <- max_plot_count + extra_top
+  extra_top    <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
+  extra_bottom <- if (show_dgp) max(3, 0.25 * max_plot_count) else 0
+
+  y_upper <- max_plot_count + extra_top
+  y_lower <- if (show_dgp) -extra_bottom else 0
 
   # --- y-axis tick calculation -----------------------------------------------
 
@@ -196,13 +199,12 @@ gf_squareplot <- function(x,
   p <- p +
     labs(x = if (show_dgp) NULL else x_label, y = "count") +
     scale_y_continuous(
+      limits = c(y_lower, y_upper),
       breaks = breaks_y,
-      labels = breaks_y,
-      expand = expansion(mult = c(0, 0.02))
+      labels = breaks_y
     ) +
     scale_x_continuous(limits = x_limits, breaks = breaks_x) +
-    base_theme +
-    coord_cartesian(ylim = c(0, y_upper), clip = "off")
+    base_theme
 
   x_min <- x_limits[1]
   x_max <- x_limits[2]
@@ -280,11 +282,13 @@ gf_squareplot <- function(x,
   # ============================================================================
   # Bottom teaching labels (all BELOW the x-axis)
   # ============================================================================
+
   if (show_dgp) {
 
-    # Place bottom labels just below axis, using negative y (shown via clip = "off")
-    bottom_title_y <- -0.06 * y_upper
-    bottom_eq_y    <- -0.12 * y_upper
+    # Choose positions within [y_lower, 0) so they are below axis but not clipped
+    bottom_title_y <- -0.25 * extra_bottom   # just below axis
+    bottom_eq_y    <- -0.55 * extra_bottom
+    b1_y           <- -0.90 * extra_bottom   # furthest down
 
     # "Parameter Estimate" (plain text), left-justified
     p <- p + annotate(
@@ -309,7 +313,6 @@ gf_squareplot <- function(x,
 
     # Red b1 label centered under the axis at x = 0 (no tick)
     if (0 >= x_min && 0 <= x_max) {
-      b1_y <- -0.20 * y_upper
       p <- p + annotate(
         "text",
         x = 0, y = b1_y,

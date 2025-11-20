@@ -198,7 +198,7 @@ gf_squareplot <- function(x,
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
       axis.title.x = element_text(
         hjust      = 0,          # left-justify
-        lineheight = 0.80,       # tightened spacing between lines
+        lineheight = 0.70,       # tighter spacing between the two lines
         color      = if (show_dgp) dgp_color else "black"
       )
     )
@@ -256,9 +256,9 @@ gf_squareplot <- function(x,
 
     if (0 >= x_min && 0 <= x_max) {
 
-      tick_len <- extra_space * 0.20
-      box_h    <- extra_space * 0.18
-      box_w    <- diff(x_limits) * 0.02
+      tick_len <- extra_space * 0.12    # shorter tick
+      box_h    <- extra_space * 0.25
+      box_w    <- diff(x_limits) * 0.05 # wider box so label fits
 
       # red tick mark pointing up from the DGP axis
       p <- p + annotate(
@@ -269,7 +269,7 @@ gf_squareplot <- function(x,
       )
 
       # center of box above tick
-      box_center_y <- axis_y + tick_len + box_h * 1.1
+      box_center_y <- axis_y + tick_len + box_h * 1.05
 
       # box + β1 = 0 text
       p <- p +

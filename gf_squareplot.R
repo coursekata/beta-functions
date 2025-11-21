@@ -214,7 +214,8 @@ gf_squareplot <- function(x,
       axis.line.y  = if (show_dgp) element_blank() else element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
       axis.title.x = element_text(color = if (show_dgp) dgp_color else "black"),
-      plot.margin  = if (show_dgp) margin(5, 5, 45, 5) else margin(5, 5, 5, 5)
+      plot.margin  = if (show_dgp) margin(5, 5, 45, 5) else margin(5, 5, 5, 5),
+      panel.grid.minor.y = element_blank()
     )
 
   p <- p +

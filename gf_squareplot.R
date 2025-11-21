@@ -323,7 +323,7 @@ gf_squareplot <- function(x,
       color  = dgp_color
     )
     
-    # Red b₁ label - top aligned with "Parameter Estimate"
+    # b₁ label - top aligned with "Parameter Estimate"
     if (0 >= x_min && 0 <= x_max) {
       p <- p + annotate(
         "text",
@@ -333,7 +333,7 @@ gf_squareplot <- function(x,
         parse = TRUE,
         size  = 5,
         fontface = "bold",
-        color = "#E60000",
+        color = dgp_color,
         alpha = 1
       )
     }

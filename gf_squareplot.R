@@ -199,7 +199,7 @@ gf_squareplot <- function(x,
     p <- p + geom_segment(
       aes(x = mean_val, xend = mean_val, y = 0, yend = line_top),
       color = "#E60000",
-      linetype = "dashed",
+      linetype = "longdash",
       linewidth = 0.7
     )
   }

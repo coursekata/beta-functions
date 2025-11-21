@@ -76,7 +76,8 @@ gf_squareplot <- function(x,
                           bars     = c("none", "outline", "solid"),
                           xbreaks  = NULL,
                           xrange   = NULL,
-                          show_dgp = FALSE) {
+                          show_dgp = FALSE,
+                          show_mean = FALSE) {
 
   bars <- match.arg(bars)
   dgp_color <- "#003d70"
@@ -187,6 +188,17 @@ gf_squareplot <- function(x,
       color     = color,
       linewidth = 0.7,
       alpha     = if (bars == "solid") alpha else 1
+    )
+  }
+
+  # --- mean line (optional) -------------------------------------------------
+  if (show_mean) {
+    mean_val <- mean(x_vec)
+    p <- p + geom_segment(
+      aes(x = mean_val, xend = mean_val, y = 0, yend = max_plot_count),
+      color = "#E60000",
+      linetype = "dashed",
+      linewidth = 0.7
     )
   }
 

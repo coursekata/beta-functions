@@ -194,8 +194,10 @@ gf_squareplot <- function(x,
   # --- mean line (optional) -------------------------------------------------
   if (show_mean) {
     mean_val <- mean(x_vec)
+    # Extend to DGP axis if shown, otherwise to top of histogram
+    line_top <- if (show_dgp) max_plot_count + extra_top * 0.40 else max_plot_count
     p <- p + geom_segment(
-      aes(x = mean_val, xend = mean_val, y = 0, yend = max_plot_count),
+      aes(x = mean_val, xend = mean_val, y = 0, yend = line_top),
       color = "#E60000",
       linetype = "dashed",
       linewidth = 0.7

@@ -99,6 +99,11 @@ gf_squareplot <- function(x,
   if (!is.numeric(x_vec)) stop("`x` must be numeric.")
   if (length(x_vec) == 0) stop("`x` has no non-missing values.")
 
+  # For large samples (>1000), default to solid bars to avoid excessive white space
+  if (length(x_vec) > 1000 && bars %in% c("none", "outline")) {
+    bars <- "solid"
+  }
+
   # --- binwidth --------------------------------------------------------------
   if (is.null(binwidth)) {
     rng <- range(x_vec)
@@ -181,12 +186,15 @@ gf_squareplot <- function(x,
 
   # --- bar outlines / solid bars --------------------------------------------
   if (bars %in% c("outline", "solid") && nrow(bar_df) > 0) {
+    # Use a lighter outline color unless user specified otherwise
+    outline_color <- if (color == "black") "grey40" else color
+    
     p <- p + geom_rect(
       data = bar_df,
       aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = count),
       fill      = if (bars == "solid") fill else NA,
-      color     = color,
-      linewidth = 0.7,
+      color     = outline_color,
+      linewidth = 0.3,
       alpha     = if (bars == "solid") alpha else 1
     )
   }
@@ -214,7 +222,7 @@ gf_squareplot <- function(x,
       axis.line.y  = if (show_dgp) element_blank() else element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
       axis.title.x = element_text(color = if (show_dgp) dgp_color else "black"),
-      plot.margin  = if (show_dgp) margin(5, 5, 45, 5) else margin(5, 5, 5, 5),
+      plot.margin  = if (show_dgp) margin(5, 5, 30, 5) else margin(5, 5, 5, 5),
       panel.grid.minor.y = element_blank()
     )
 

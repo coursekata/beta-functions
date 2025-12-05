@@ -25,17 +25,11 @@
 #'
 #' @section DGP Overlay (show_dgp=TRUE):
 #' Adds educational overlay for teaching hypothesis testing:
-#' - Top axis: Shows population parameter (DGP) with equation Y = B0 + B1*X + e
-#' - Bottom axis: Shows parameter estimate with equation Y = b0 + b1*X + e
-#' - Red triangle and B1 = 0 label: Marks null hypothesis position
-#' - Blue b1 label: Marks observed estimate position
-#' Capital letters (B0, B1) represent population parameters (beta),
-#' lowercase letters (b0, b1) represent sample estimates.
-#'
-#' @section Notation Styles (notation parameter):
-#' - "ascii" (default): Uses B0, B1 for population, b0, b1 for sample. Works everywhere.
-#' - "unicode": Uses β₀, β₁ with subscripts. Requires Unicode font support.
-#' - "plotmath": Uses R's plotmath for formatted equations. Requires full R graphics.
+#' - Top axis: Shows population parameter (DGP) with equation Y = β₀ + β₁X + ε
+#' - Bottom axis: Shows parameter estimate with equation Y = b₀ + b₁X + e
+#' - Red triangle and β₁ = 0 label: Marks null hypothesis position
+#' - Red b₁ label: Marks observed estimate position
+#' All elements color-coordinated (blue for axes/equations, bright red for hypothesis test)
 #'
 #' @section Examples:
 #' # Basic square plot
@@ -51,16 +45,16 @@
 #'               xbreaks = 10,
 #'               mincount = 20)
 #'
-#' # Use Unicode notation (if your environment supports it)
-#' gf_squareplot(~b1, data = sampling_dist, 
-#'               show_dgp = TRUE,
-#'               notation = "unicode")
+#' # Custom binning
+#' gf_squareplot(~values, data = mydata, 
+#'               binwidth = 2, 
+#'               origin = 0)
 #'
 #' @section Teaching Notes:
 #' - Individual squares make sample size and distribution shape concrete
-#' - DGP overlay emphasizes difference between population parameters (capital letters) 
-#'   and sample estimates (lowercase letters)
-#' - Red markers clearly indicate null hypothesis (B1 = 0) vs. observed estimate (b1)
+#' - DGP overlay emphasizes difference between population parameters (Greek letters) 
+#'   and sample estimates (regular letters)
+#' - Red markers clearly indicate null hypothesis (β₁ = 0) vs. observed estimate (b₁)
 #' - Use mincount to maintain consistent scale when comparing multiple plots
 #' - Warning messages are automatically suppressed for cleaner classroom display
 #'
@@ -83,34 +77,10 @@ gf_squareplot <- function(x,
                           xbreaks  = NULL,
                           xrange   = NULL,
                           show_dgp = FALSE,
-                          show_mean = FALSE,
-                          notation = c("ascii", "unicode", "plotmath")) {
+                          show_mean = FALSE) {
 
   bars <- match.arg(bars)
-  notation <- match.arg(notation)
   dgp_color <- "#003d70"
-
-  # --- notation strings based on style --------------------------------------
-  if (notation == "unicode") {
-    pop_equation <- "Yᵢ = β₀ + β₁Xᵢ + εᵢ"
-    sample_equation <- "Yᵢ = b₀ + b₁Xᵢ + eᵢ"
-    null_label <- "β₁ = 0"
-    estimate_label <- "b₁"
-    use_parse <- FALSE
-  } else if (notation == "plotmath") {
-    pop_equation <- "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]"
-    sample_equation <- "Y[i] == b[0] + b[1] * X[i] + e[i]"
-    null_label <- "beta[1] == 0"
-    estimate_label <- "b[1]"
-    use_parse <- TRUE
-  } else {
-    # ASCII (default) - capital letters for population parameters
-    pop_equation <- "Y = B0 + B1*X + e"
-    sample_equation <- "Y = b0 + b1*X + e"
-    null_label <- "B1 = 0"
-    estimate_label <- "b1"
-    use_parse <- FALSE
-  }
 
   # --- extract x vector ------------------------------------------------------
   is_formula <- inherits(x, "formula")
@@ -252,7 +222,7 @@ gf_squareplot <- function(x,
       axis.line.y  = if (show_dgp) element_blank() else element_line(color = "black"),
       axis.text.x  = element_text(color = if (show_dgp) dgp_color else "black"),
       axis.title.x = element_text(color = if (show_dgp) dgp_color else "black"),
-      plot.margin  = if (show_dgp) margin(5, 5, 40, 5) else margin(5, 5, 5, 5),
+      plot.margin  = if (show_dgp) margin(5, 5, 30, 5) else margin(5, 5, 5, 5),
       panel.grid.minor.y = element_blank()
     )
 
@@ -298,15 +268,15 @@ gf_squareplot <- function(x,
     # Population model equation (top)
     p <- p + annotate(
       "text", x = -Inf, y = eq_y,
-      label = pop_equation,
-      parse  = use_parse,
+      label = "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]",
+      parse  = TRUE,
       hjust  = -0.01,
       vjust  = 0.5,
       size   = 4, fontface = "bold",
       color  = dgp_color
     )
 
-    # Red null hypothesis triangle + label at 0 on DGP axis
+    # Red β1 = 0 triangle + label at 0 on DGP axis
     if (0 >= x_min && 0 <= x_max) {
 
       # Red triangle pointing down with tip touching the axis from above
@@ -328,8 +298,8 @@ gf_squareplot <- function(x,
       p <- p + annotate(
         "text",
         x = 0, y = label_y,
-        label = null_label,
-        parse = use_parse,
+        label = "beta[1] == 0",
+        parse = TRUE,
         size  = 5,
         fontface = "bold",
         color = "#E60000",
@@ -342,33 +312,33 @@ gf_squareplot <- function(x,
   # Bottom x-axis labels (two lines, left-aligned to match upper DGP labels)
   # ============================================================================
   if (show_dgp) {
-    # "Parameter Estimate" title
+    # "Parameter Estimate" title - top aligned with red b₁
     p <- p + annotate(
       "text", x = -Inf, y = -Inf,
       label = "Parameter Estimate",
-      hjust = -0.01, vjust = 2.8,
+      hjust = -0.01, vjust = 3.2,
       size  = 4, fontface = "bold", color = dgp_color
     )
     
-    # Equation below title (sample estimate version) - more space between
+    # Equation below title (sample estimate version with b, e)
     p <- p + annotate(
       "text", x = -Inf, y = -Inf,
-      label = sample_equation,
-      parse  = use_parse,
+      label = "Y[i] == b[0] + b[1] * X[i] + e[i]",
+      parse  = TRUE,
       hjust  = -0.01,
-      vjust  = 4.2,
+      vjust  = 4.0,
       size   = 4, fontface = "bold",
       color  = dgp_color
     )
     
-    # Estimate label (b1) centered at 0
+    # b₁ label - top aligned with "Parameter Estimate"
     if (0 >= x_min && 0 <= x_max) {
       p <- p + annotate(
         "text",
         x = 0, y = -Inf,
-        vjust = 2.3,
-        label = estimate_label,
-        parse = use_parse,
+        vjust = 2.5,
+        label = "b[1]",
+        parse = TRUE,
         size  = 5,
         fontface = "bold",
         color = dgp_color,

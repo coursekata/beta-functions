@@ -241,7 +241,7 @@ gf_squareplot <- function(x,
   x_max <- if (!is.null(xrange)) xrange[2] else x_limits[2]
 
   # ============================================================================
-  # DGP OVERLAY (top)
+  # DGP OVERLAY (top) - Using Unicode characters for portability
   # ============================================================================
   if (show_dgp) {
 
@@ -265,18 +265,17 @@ gf_squareplot <- function(x,
       size  = 4, fontface = "bold", color = dgp_color
     )
 
-    # Population model equation (top)
+    # Population model equation (top) - Unicode version
     p <- p + annotate(
       "text", x = -Inf, y = eq_y,
-      label = "Y[i] == beta[0] + beta[1] * X[i] + epsilon[i]",
-      parse  = TRUE,
+      label = "Yᵢ = β₀ + β₁Xᵢ + εᵢ",
       hjust  = -0.01,
       vjust  = 0.5,
       size   = 4, fontface = "bold",
       color  = dgp_color
     )
 
-    # Red β1 = 0 triangle + label at 0 on DGP axis
+    # Red β₁ = 0 triangle + label at 0 on DGP axis
     if (0 >= x_min && 0 <= x_max) {
 
       # Red triangle pointing down with tip touching the axis from above
@@ -292,14 +291,13 @@ gf_squareplot <- function(x,
         alpha = 1
       )
 
-      # label above triangle
+      # label above triangle - Unicode version
       label_y <- axis_y + extra_top * 0.48
 
       p <- p + annotate(
         "text",
         x = 0, y = label_y,
-        label = "beta[1] == 0",
-        parse = TRUE,
+        label = "β₁ = 0",
         size  = 5,
         fontface = "bold",
         color = "#E60000",
@@ -310,6 +308,7 @@ gf_squareplot <- function(x,
 
   # ============================================================================
   # Bottom x-axis labels (two lines, left-aligned to match upper DGP labels)
+  # Using Unicode characters for portability
   # ============================================================================
   if (show_dgp) {
     # "Parameter Estimate" title - top aligned with red b₁
@@ -320,25 +319,23 @@ gf_squareplot <- function(x,
       size  = 4, fontface = "bold", color = dgp_color
     )
     
-    # Equation below title (sample estimate version with b, e)
+    # Equation below title (sample estimate version with b, e) - Unicode version
     p <- p + annotate(
       "text", x = -Inf, y = -Inf,
-      label = "Y[i] == b[0] + b[1] * X[i] + e[i]",
-      parse  = TRUE,
+      label = "Yᵢ = b₀ + b₁Xᵢ + eᵢ",
       hjust  = -0.01,
       vjust  = 4.0,
       size   = 4, fontface = "bold",
       color  = dgp_color
     )
     
-    # b₁ label - top aligned with "Parameter Estimate"
+    # b₁ label - Unicode version
     if (0 >= x_min && 0 <= x_max) {
       p <- p + annotate(
         "text",
         x = 0, y = -Inf,
         vjust = 2.5,
-        label = "b[1]",
-        parse = TRUE,
+        label = "b₁",
         size  = 5,
         fontface = "bold",
         color = dgp_color,

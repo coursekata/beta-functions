@@ -187,14 +187,14 @@ gf_squareplot <- function(x,
   # --- bar outlines / solid bars --------------------------------------------
   if (bars %in% c("outline", "solid") && nrow(bar_df) > 0) {
     # Use a lighter outline color unless user specified otherwise
-    outline_color <- if (color == "black") "grey40" else color
+    outline_color <- if (color == "black") "grey20" else color
     
     p <- p + geom_rect(
       data = bar_df,
       aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = count),
       fill      = if (bars == "solid") fill else NA,
       color     = outline_color,
-      linewidth = 0.3,
+      linewidth = 0.5,
       alpha     = if (bars == "solid") alpha else 1
     )
   }

@@ -80,6 +80,7 @@ This code starts by creating a sampling distribution, then adds:
 - **A bottom axis** labeled "Parameter Estimate" with the sample equation using Roman letters: Y = b₀ + b₁X + e  
 - **A red triangle at zero** on the top axis marking the null hypothesis (β₁ = 0)
 - **A blue b₁ label** to label the bottom axis
+- **Show the mean** adding `show_mean = TRUE` draws a dashed red line at the mean of the sampling distribution, helpful when discussing where sample estimates tend to fall and to show that as the sampling distribution gets larger, its mean approaches the mean of the population.
 
 <img src="images/gf_squareplot_3.png" width="50%">
 
@@ -88,10 +89,6 @@ The visual contrast between the population parameters (what we're trying to lear
 By setting`mincount=10` we are able to change the size of the sampling distribution from 10 to 100 (`do(100)*`) and fill up the same graph axis with more of the simulated `b1`s. Now the mean is much closer to $\beta_1=0$.
 
 <img src="images/gf_squareplot_4.png" width="50%">
-
-### Optional: Show the Mean
-
-Add `show_mean = TRUE` to draw a dashed red line at the mean of the sampling distribution—helpful when discussing where sample estimates tend to fall and to show that as the sampling distribution gets larger, its mean approaches the mean of the population.
 
 ## Putting It All Together
 

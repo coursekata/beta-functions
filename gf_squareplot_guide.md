@@ -2,6 +2,8 @@
 
 Beginning statistics students often have trouble interpreting histograms. The concept of binning is not obvious. Also not obvious is the fact that the height of the bars represents the count of cases that fall within each bin. The `gf_squareplot()` function offers a version of a histogram where you can actually *count* the individual observations.
 
+![Example with ~Thumb](images/gf_squareplot_1.png)
+
 ## What Makes It Different?
 
 Instead of abstract bars, `gf_squareplot` displays each data point as a small stacked rectangle. Students can literally count the squares in each bin, making sample size and distribution shape concrete and tangible. It's particularly useful for sampling distributions where n might be 50 or 100—small enough that individual observations matter.

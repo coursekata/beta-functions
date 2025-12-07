@@ -63,20 +63,29 @@ Note that `xbreaks` uses R's `pretty()` function under the hood, so if you ask f
 Set `show_dgp = TRUE` to add a pedagogical overlay designed for teaching sampling distributions and hypothesis testing. This display is intended to support the CourseKata curriculum, in which sampling distributions are introduced first for a group difference ($b_1$) and the sampling distribution is created using the `shuffle()` function.
 
 ```r
-gf_squareplot(~b1, data = sampling_dist, 
-              show_dgp = TRUE,
-              xrange = c(-30, 30),
-              mincount = 20)
+sdob1 <- do(100) * b1(shuffle(time) ~ bucket, data = df)
+gf_squareplot(~b1, data = sdob1, 
+   show_dgp = TRUE,
+   show_mean = TRUE,
+   xrange = c(-30, 30),
+   mincount = 10,
+   binwidth = 2)
 ```
 
-This adds:
+This code starts by creating a sampling distribution, then adds:
 
 - **A top axis** labeled "Population Parameter (DGP)" with the population model equation using Greek letters: Y = β₀ + β₁X + ε
 - **A bottom axis** labeled "Parameter Estimate" with the sample equation using Roman letters: Y = b₀ + b₁X + e  
 - **A red triangle at zero** on the top axis marking the null hypothesis (β₁ = 0)
 - **A blue b₁ label** to label the bottom axis
 
+<img src="images/gf_squareplot_3.png" width="50%">
+
 The visual contrast between the population parameters (what we're trying to learn about) and sample estimates (what we actually observe) reinforces a distinction that students often find confusing.
+
+By setting`mincount=10` we are able to change the size of the sampling distribution from 10 to 100 (`do(100)*`) and fill up the same graph axis with more of the simulated `b1`s.
+
+<img src="images/gf_squareplot_4.png" width="50%">
 
 ### Optional: Show the Mean
 

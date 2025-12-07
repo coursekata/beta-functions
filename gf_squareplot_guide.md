@@ -83,9 +83,9 @@ This code starts by creating a sampling distribution, then adds:
 
 <img src="images/gf_squareplot_3.png" width="50%">
 
-The visual contrast between the population parameters (what we're trying to learn about) and sample estimates (what we actually observe) reinforces a distinction that students often find confusing.
+The visual contrast between the population parameters (what we're trying to learn about) and sample estimates (what we actually observe) reinforces a distinction that students often find confusing. Students can see that the mean of the sampling distribution of 10 `b1`s is not that close to the population mean of 0. 
 
-By setting`mincount=10` we are able to change the size of the sampling distribution from 10 to 100 (`do(100)*`) and fill up the same graph axis with more of the simulated `b1`s.
+By setting`mincount=10` we are able to change the size of the sampling distribution from 10 to 100 (`do(100)*`) and fill up the same graph axis with more of the simulated `b1`s. Now the mean is much closer to $\beta_1=0$.
 
 <img src="images/gf_squareplot_4.png" width="50%">
 

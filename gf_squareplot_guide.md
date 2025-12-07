@@ -2,7 +2,7 @@
 
 Beginning statistics students often have trouble interpreting histograms. The concept of binning is not obvious. Also not obvious is the fact that the height of the bars represents the count of cases that fall within each bin. The `gf_squareplot()` function offers a version of a histogram where you can actually *count* the individual observations.
 
-<img src="images/gf_squareplot_1.png" width="40%">
+<img src="images/gf_squareplot_1.png" width="50%">
 
 ## What Makes It Different?
 
@@ -21,6 +21,10 @@ To help students transition to canonical histograms, you can also add bar outlin
 ```r
 gf_squareplot(~x, data = df, bars = "outline")
 ```
+
+For example, `gf_squareplot(~ Thumb, data = Fingers, bars="outline", binwidth=3)`
+
+<img src="images/gf_squareplot_2.png" width="50%">
 
 For larger samples (over 1000 observations), the function automatically switches to solid bars to keep things readable.
 

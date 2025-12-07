@@ -90,22 +90,6 @@ By setting`mincount=10` we are able to change the size of the sampling distribut
 
 <img src="images/gf_squareplot_4.png" width="50%">
 
-## Putting It All Together
-
-Here's a complete example for a hypothesis testing demonstration:
-
-```r
-# Assume sampling_dist contains b1 values from many simulated samples
-gf_squareplot(~b1, data = sampling_dist, 
-              bars = "none",
-              show_dgp = TRUE,
-              show_mean = TRUE,
-              xrange = c(-30, 30),
-              xbreaks = seq(-30, 30, by = 10),
-              mincount = 25,
-              fill = "#7fcecc")
-```
-
 ## Teaching Tips
 
 - The countable squares make abstract concepts concrete—students can see that "n = 47" means 47 actual squares

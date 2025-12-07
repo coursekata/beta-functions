@@ -1,6 +1,6 @@
 # Introducing `gf_squareplot`: A Countable Histogram
 
-Beginning statistics students often have trouble interpreting histograms. The concept of binning is not obvious. Also not obvious is the fact that the height of the bars represents the count of cases that fall within each bin. The `gf_squareplot()` function offers a version of a histogram where you can actually *count* the individual observations.
+Beginning statistics students often have trouble interpreting histograms. The concept of binning is not obvious. Also not obvious is the fact that the height of the bars represents the count of cases that fall within each bin. The `gf_squareplot()` function offers a version of a histogram where you can actually *count* the individual observations. For example, `gf_squareplot(~ Thumb, data = Fingers, binwidth=3)`:
 
 <img src="images/gf_squareplot_1.png" width="50%">
 
@@ -22,7 +22,7 @@ To help students transition to canonical histograms, you can also add bar outlin
 gf_squareplot(~x, data = df, bars = "outline")
 ```
 
-For example, `gf_squareplot(~ Thumb, data = Fingers, bars="outline", binwidth=3)`
+For example, `gf_squareplot(~ Thumb, data = Fingers, bars="outline", binwidth=3)`:
 
 <img src="images/gf_squareplot_2.png" width="50%">
 

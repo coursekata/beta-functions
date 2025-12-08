@@ -2,6 +2,12 @@
 
 Beginning statistics students often have trouble interpreting histograms. The concept of binning is not obvious. Also not obvious is the fact that the height of the bars represents the count of cases that fall within each bin. The `gf_squareplot()` function offers a version of a histogram where you can actually *count* the individual observations. 
 
+To try it out, you can load the function in a Jupyter notebook by running this code in your setup cell:
+
+```r
+source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_squareplot.R")
+```
+
 ## What Makes It Different?
 
 For example, `gf_squareplot(~ Thumb, data = Fingers, binwidth=3)`:

@@ -7,10 +7,10 @@
 #' Pipe this function after a gf_histogram() call to add downward-pointing
 #' triangular markers at the empirical quantile cutoffs. The function
 #' automatically extracts both the variable and the prop value from the
-#' middle() call in your fill aesthetic.
+#' middle(), upper(), or lower() call in your fill aesthetic.
 #'
 #' @param plot A ggplot object (typically a histogram created with gf_histogram
-#'        with fill = ~middle(...))
+#'        with fill = ~middle(...), ~upper(...), or ~lower(...))
 #' @param color Color of the arrow markers (default: "#1e3a8a" - dark blue)
 #' @param size Size of the arrow markers (default: 4)
 #' @param labels Logical; whether to add text annotations explaining the cutoffs
@@ -21,21 +21,21 @@
 #' @examples
 #' library(coursekata)
 #'
-#' # Basic usage - prop is automatically extracted from middle()
-#' gf_histogram(~Thumb, data = Fingers, fill = ~middle(Thumb, .95)) %>%
-#'   show_alpha_cutoffs()
-#'
-#' # With explanatory labels
+#' # Two-tailed: middle() - markers on both sides
 #' gf_histogram(~Thumb, data = Fingers, fill = ~middle(Thumb, .95)) %>%
 #'   show_alpha_cutoffs(labels = TRUE)
 #'
-#' # Custom styling
-#' gf_histogram(~Thumb, data = Fingers, fill = ~middle(Thumb, .95)) %>%
-#'   show_alpha_cutoffs(color = "darkred", size = 5)
+#' # One-tailed upper: upper() - marker on right only
+#' gf_histogram(~Thumb, data = Fingers, fill = ~upper(Thumb, .05)) %>%
+#'   show_alpha_cutoffs(labels = TRUE)
+#'
+#' # One-tailed lower: lower() - marker on left only
+#' gf_histogram(~Thumb, data = Fingers, fill = ~lower(Thumb, .05)) %>%
+#'   show_alpha_cutoffs(labels = TRUE)
 #'
 show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE) {
 
-  # Extract the fill aesthetic to find the middle() call
+  # Extract the fill aesthetic to find the middle/upper/lower call
   fill_expr <- NULL
 
   # Try plot's main mapping first
@@ -52,20 +52,20 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
   }
 
   if (is.null(fill_expr)) {
-    stop("Could not find fill aesthetic. Make sure you have fill = ~middle(...) in your histogram.")
+    stop("Could not find fill aesthetic. Make sure you have fill = ~middle(...), ~upper(...), or ~lower(...) in your histogram.")
   }
 
-  # Parse the middle() call to extract prop
-  # The expression should be something like: middle(Thumb, 0.95)
-
-  # Check if it's a call to middle or middle_arrows
-  if (!is.call(fill_expr) || !(as.character(fill_expr[[1]]) %in% c("middle", "middle_arrows"))) {
-    stop("Expected fill = ~middle(...). Found: ", deparse(fill_expr))
+  # Determine which function is being used
+  valid_funcs <- c("middle", "upper", "lower")
+  if (!is.call(fill_expr) || !(as.character(fill_expr[[1]]) %in% valid_funcs)) {
+    stop("Expected fill = ~middle(...), ~upper(...), or ~lower(...). Found: ", deparse(fill_expr))
   }
+  
+  func_type <- as.character(fill_expr[[1]])
 
-  # Extract the prop argument (second argument to middle())
+  # Extract the prop argument (second argument)
   if (length(fill_expr) < 3) {
-    stop("middle() requires at least 2 arguments: middle(variable, prop)")
+    stop(func_type, "() requires at least 2 arguments: ", func_type, "(variable, prop)")
   }
 
   prop <- eval(fill_expr[[3]])
@@ -108,87 +108,108 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
     stop("Could not extract variable from plot. Make sure you're piping from a gf_histogram() call.")
   }
 
-  # Calculate cutoffs to match middle() behavior exactly
-  # For middle 95% of n=1000: exclude positions 1-25 and 976-1000
-  # The boundary values are at positions 26 and 975
+  # Calculate cutoffs based on function type
   x_clean <- x_data[!is.na(x_data)]
   x_sorted <- sort(x_clean)
   n <- length(x_sorted)
   
-  alpha <- 1 - prop
-  # Lower cutoff: first value IN the middle (position after excluded lower tail)
-  lower_idx <- floor(alpha / 2 * n) + 1
-  # Upper cutoff: last value IN the middle
-  upper_idx <- ceiling((1 - alpha / 2) * n)
-  
-  # Clamp to valid indices
-  lower_idx <- max(1, min(n, lower_idx))
-  upper_idx <- max(1, min(n, upper_idx))
-  
-  cutoffs <- c(x_sorted[lower_idx], x_sorted[upper_idx])
+  if (func_type == "middle") {
+    # Two-tailed: cutoffs on both sides
+    alpha <- 1 - prop
+    lower_idx <- floor(alpha / 2 * n) + 1
+    upper_idx <- ceiling((1 - alpha / 2) * n)
+    lower_idx <- max(1, min(n, lower_idx))
+    upper_idx <- max(1, min(n, upper_idx))
+    cutoff_lower <- x_sorted[lower_idx]
+    cutoff_upper <- x_sorted[upper_idx]
+    tail_prop <- alpha / 2
+    
+  } else if (func_type == "upper") {
+    # One-tailed upper: cutoff on right only
+    # upper(x, .05) shades the top 5%, so cutoff is at the 95th percentile
+    cutoff_idx <- ceiling((1 - prop) * n)
+    cutoff_idx <- max(1, min(n, cutoff_idx))
+    cutoff_lower <- NULL
+    cutoff_upper <- x_sorted[cutoff_idx]
+    tail_prop <- prop
+    
+  } else if (func_type == "lower") {
+    # One-tailed lower: cutoff on left only
+    # lower(x, .05) shades the bottom 5%, so cutoff is at the 5th percentile
+    cutoff_idx <- floor(prop * n) + 1
+    cutoff_idx <- max(1, min(n, cutoff_idx))
+    cutoff_lower <- x_sorted[cutoff_idx]
+    cutoff_upper <- NULL
+    tail_prop <- prop
+  }
 
-  plot <- plot +
-    ggplot2::annotate("point", x = cutoffs[1], y = 0,
-                      shape = 25, size = size, fill = color, color = color) +
-    ggplot2::annotate("point", x = cutoffs[2], y = 0,
-                      shape = 25, size = size, fill = color, color = color)
+  # Add markers
+  if (!is.null(cutoff_lower)) {
+    plot <- plot +
+      ggplot2::annotate("point", x = cutoff_lower, y = 0,
+                        shape = 25, size = size, fill = color, color = color)
+  }
+  if (!is.null(cutoff_upper)) {
+    plot <- plot +
+      ggplot2::annotate("point", x = cutoff_upper, y = 0,
+                        shape = 25, size = size, fill = color, color = color)
+  }
   
   # Add explanatory labels if requested
   if (labels) {
-    # Calculate positions for labels
     # Build the plot to get actual y-axis range
     plot_built <- ggplot2::ggplot_build(plot)
     y_range <- plot_built$layout$panel_params[[1]]$y.range
-    if (is.null(y_range)) y_range <- c(0, 30)  # fallback
-    label_y <- y_range[2] * 0.15  # Position labels at 15% of max height
-    
-    # Calculate alpha/2 for the label text
-    alpha <- 1 - prop
-    tail_prop <- alpha / 2
+    if (is.null(y_range)) y_range <- c(0, 30)
+    label_y <- y_range[2] * 0.15
     
     # Format the proportion nicely
     tail_label <- if (tail_prop == 0.025) ".025" 
                   else if (tail_prop == 0.05) ".05"
                   else if (tail_prop == 0.005) ".005"
+                  else if (tail_prop == 0.01) ".01"
+                  else if (tail_prop == 0.1) ".10"
                   else format(tail_prop, digits = 3)
     
-    # X range for positioning curved arrows
+    # X range for positioning
     x_range <- range(x_clean)
-    x_span <- x_range[2] - x_range[1]
     
-    # Position labels centered between cutoff and edge of data
-    left_label_x <- (x_range[1] + cutoffs[1]) / 2
-    right_label_x <- (cutoffs[2] + x_range[2]) / 2
+    # Add labels based on which cutoffs exist
+    if (!is.null(cutoff_lower)) {
+      left_label_x <- (x_range[1] + cutoff_lower) / 2
+      plot <- plot +
+        ggplot2::annotate("text",
+                          x = left_label_x,
+                          y = label_y * 2.0,
+                          label = paste0(tail_label, " of\nvalues below"),
+                          hjust = 0.5, vjust = 0, size = 3.2, color = color,
+                          fontface = "italic") +
+        ggplot2::annotate("segment", 
+                          x = left_label_x,
+                          xend = cutoff_lower,
+                          y = label_y * 1.8, 
+                          yend = 0,
+                          linewidth = 0.3,
+                          color = color)
+    }
     
-    plot <- plot +
-      # Left side: label in left margin, thin line to cutoff marker
-      ggplot2::annotate("text",
-                        x = left_label_x,
-                        y = label_y * 2.0,
-                        label = paste0(tail_label, " of\nvalues below"),
-                        hjust = 0.5, vjust = 0, size = 3.2, color = color,
-                        fontface = "italic") +
-      ggplot2::annotate("segment", 
-                        x = left_label_x,
-                        xend = cutoffs[1],
-                        y = label_y * 1.8, 
-                        yend = 0,
-                        linewidth = 0.3,
-                        color = color) +
-      # Right side: label in right margin, thin line to cutoff marker
-      ggplot2::annotate("text",
-                        x = right_label_x,
-                        y = label_y * 2.0,
-                        label = paste0(tail_label, " of\nvalues above"),
-                        hjust = 0.5, vjust = 0, size = 3.2, color = color,
-                        fontface = "italic") +
-      ggplot2::annotate("segment",
-                        x = right_label_x,
-                        xend = cutoffs[2],
-                        y = label_y * 1.8,
-                        yend = 0,
-                        linewidth = 0.3,
-                        color = color)
+    if (!is.null(cutoff_upper)) {
+      right_label_x <- (cutoff_upper + x_range[2]) / 2
+      plot <- plot +
+        ggplot2::annotate("text",
+                          x = right_label_x,
+                          y = label_y * 2.0,
+                          label = paste0(tail_label, " of\nvalues above"),
+                          hjust = 0.5, vjust = 0, size = 3.2, color = color,
+                          fontface = "italic") +
+        ggplot2::annotate("segment",
+                          x = right_label_x,
+                          xend = cutoff_upper,
+                          y = label_y * 1.8,
+                          yend = 0,
+                          linewidth = 0.3,
+                          color = color)
+    }
   }
   
   plot

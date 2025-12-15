@@ -143,74 +143,115 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
     tail_prop <- prop
   }
 
-  # Add markers
+  # Build the plot to get y-axis range (needed for arrow positioning)
+  plot_built <- ggplot2::ggplot_build(plot)
+  y_range <- plot_built$layout$panel_params[[1]]$y.range
+  if (is.null(y_range)) y_range <- c(0, 30)
+  
+  # Position arrows below x-axis (in margin)
+  arrow_y <- -y_range[2] * 0.06
+  
+  # Consistent height for dashed lines (about 20% up the plot)
+  line_top_y <- y_range[2] * 0.20
+  
+  # X range for positioning labels
+  x_range <- range(x_clean)
+  x_span <- x_range[2] - x_range[1]
+  
+  # Format the proportion nicely for labels
+  tail_label <- if (tail_prop == 0.025) ".025" 
+                else if (tail_prop == 0.05) ".05"
+                else if (tail_prop == 0.005) ".005"
+                else if (tail_prop == 0.01) ".01"
+                else if (tail_prop == 0.1) ".10"
+                else format(tail_prop, digits = 3)
+  
+  # Add dashed lines for lower cutoff (drawn first, arrows on top)
   if (!is.null(cutoff_lower)) {
+    # Dashed vertical line - stops just above the arrow tip
+    line_bottom_y <- arrow_y + y_range[2] * 0.015
     plot <- plot +
-      ggplot2::annotate("point", x = cutoff_lower, y = 0,
-                        shape = 25, size = size, fill = color, color = color)
-  }
-  if (!is.null(cutoff_upper)) {
+      ggplot2::annotate("segment", 
+                        x = cutoff_lower, xend = cutoff_lower,
+                        y = line_bottom_y, yend = line_top_y,
+                        linetype = "dashed", linewidth = 0.5,
+                        color = color)
+    
+    # Label with angled dashed line (only if labels=TRUE)
+    if (labels) {
+      # Line endpoint stops before reaching the label
+      line_end_x <- cutoff_lower - x_span * 0.06
+      line_end_y <- line_top_y + y_range[2] * 0.22
+      
+      # Label position: just above where line ends
+      label_x <- cutoff_lower - x_span * 0.08
+      label_y <- line_end_y + y_range[2] * 0.06
+      
+      plot <- plot +
+        # Angled dashed line from top of vertical line, stops before label
+        ggplot2::annotate("segment",
+                          x = cutoff_lower, xend = line_end_x,
+                          y = line_top_y, yend = line_end_y,
+                          linetype = "dashed", linewidth = 0.5,
+                          color = color) +
+        ggplot2::annotate("text",
+                          x = label_x,
+                          y = label_y,
+                          label = paste0(tail_label, " of\nvalues below"),
+                          hjust = 0.5, vjust = 0.5, size = 3.2, color = color,
+                          fontface = "italic")
+    }
+    
+    # Arrow below x-axis (drawn last, on top of line)
     plot <- plot +
-      ggplot2::annotate("point", x = cutoff_upper, y = 0,
+      ggplot2::annotate("point", x = cutoff_lower, y = arrow_y,
                         shape = 25, size = size, fill = color, color = color)
   }
   
-  # Add explanatory labels if requested
-  if (labels) {
-    # Build the plot to get actual y-axis range
-    plot_built <- ggplot2::ggplot_build(plot)
-    y_range <- plot_built$layout$panel_params[[1]]$y.range
-    if (is.null(y_range)) y_range <- c(0, 30)
-    label_y <- y_range[2] * 0.15
+  # Add dashed lines for upper cutoff (drawn first, arrows on top)
+  if (!is.null(cutoff_upper)) {
+    # Dashed vertical line - stops just above the arrow tip
+    line_bottom_y <- arrow_y + y_range[2] * 0.015
+    plot <- plot +
+      ggplot2::annotate("segment",
+                        x = cutoff_upper, xend = cutoff_upper,
+                        y = line_bottom_y, yend = line_top_y,
+                        linetype = "dashed", linewidth = 0.5,
+                        color = color)
     
-    # Format the proportion nicely
-    tail_label <- if (tail_prop == 0.025) ".025" 
-                  else if (tail_prop == 0.05) ".05"
-                  else if (tail_prop == 0.005) ".005"
-                  else if (tail_prop == 0.01) ".01"
-                  else if (tail_prop == 0.1) ".10"
-                  else format(tail_prop, digits = 3)
-    
-    # X range for positioning
-    x_range <- range(x_clean)
-    
-    # Add labels based on which cutoffs exist
-    if (!is.null(cutoff_lower)) {
-      left_label_x <- (x_range[1] + cutoff_lower) / 2
+    # Label with angled dashed line (only if labels=TRUE)
+    if (labels) {
+      # Line endpoint stops before reaching the label
+      line_end_x <- cutoff_upper + x_span * 0.06
+      line_end_y <- line_top_y + y_range[2] * 0.22
+      
+      # Label position: just above where line ends
+      label_x <- cutoff_upper + x_span * 0.08
+      label_y <- line_end_y + y_range[2] * 0.06
+      
       plot <- plot +
-        ggplot2::annotate("text",
-                          x = left_label_x,
-                          y = label_y * 2.0,
-                          label = paste0(tail_label, " of\nvalues below"),
-                          hjust = 0.5, vjust = 0, size = 3.2, color = color,
-                          fontface = "italic") +
-        ggplot2::annotate("segment", 
-                          x = left_label_x,
-                          xend = cutoff_lower,
-                          y = label_y * 1.8, 
-                          yend = 0,
-                          linewidth = 0.3,
-                          color = color)
-    }
-    
-    if (!is.null(cutoff_upper)) {
-      right_label_x <- (cutoff_upper + x_range[2]) / 2
-      plot <- plot +
-        ggplot2::annotate("text",
-                          x = right_label_x,
-                          y = label_y * 2.0,
-                          label = paste0(tail_label, " of\nvalues above"),
-                          hjust = 0.5, vjust = 0, size = 3.2, color = color,
-                          fontface = "italic") +
+        # Angled dashed line from top of vertical line, stops before label
         ggplot2::annotate("segment",
-                          x = right_label_x,
-                          xend = cutoff_upper,
-                          y = label_y * 1.8,
-                          yend = 0,
-                          linewidth = 0.3,
-                          color = color)
+                          x = cutoff_upper, xend = line_end_x,
+                          y = line_top_y, yend = line_end_y,
+                          linetype = "dashed", linewidth = 0.5,
+                          color = color) +
+        ggplot2::annotate("text",
+                          x = label_x,
+                          y = label_y,
+                          label = paste0(tail_label, " of\nvalues above"),
+                          hjust = 0.5, vjust = 0.5, size = 3.2, color = color,
+                          fontface = "italic")
     }
+    
+    # Arrow below x-axis (drawn last, on top of line)
+    plot <- plot +
+      ggplot2::annotate("point", x = cutoff_upper, y = arrow_y,
+                        shape = 25, size = size, fill = color, color = color)
   }
+  
+  # Allow drawing in margins
+  plot <- plot + ggplot2::coord_cartesian(clip = "off")
   
   plot
 }

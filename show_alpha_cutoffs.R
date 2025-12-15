@@ -7,10 +7,10 @@
 #' Pipe this function after a gf_histogram() call to add downward-pointing
 #' triangular markers at the empirical quantile cutoffs. The function
 #' automatically extracts both the variable and the prop value from the
-#' middle(), upper(), or lower() call in your fill aesthetic.
+#' middle(), upper(), lower(), or outer() call in your fill aesthetic.
 #'
 #' @param plot A ggplot object (typically a histogram created with gf_histogram
-#'        with fill = ~middle(...), ~upper(...), or ~lower(...))
+#'        with fill = ~middle(...), ~upper(...), ~lower(...), or ~outer(...))
 #' @param color Color of the arrow markers (default: "#1e3a8a" - dark blue)
 #' @param size Size of the arrow markers (default: 4)
 #' @param labels Logical; whether to add text annotations explaining the cutoffs
@@ -21,8 +21,12 @@
 #' @examples
 #' library(coursekata)
 #'
-#' # Two-tailed: middle() - markers on both sides
+#' # Two-tailed middle: middle() - shades center, markers on both sides
 #' gf_histogram(~Thumb, data = Fingers, fill = ~middle(Thumb, .95)) %>%
+#'   show_alpha_cutoffs(labels = TRUE)
+#'
+#' # Two-tailed outer: outer() - shades both tails, markers on both sides
+#' gf_histogram(~Thumb, data = Fingers, fill = ~outer(Thumb, .05)) %>%
 #'   show_alpha_cutoffs(labels = TRUE)
 #'
 #' # One-tailed upper: upper() - marker on right only
@@ -56,9 +60,9 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
   }
 
   # Determine which function is being used
-  valid_funcs <- c("middle", "upper", "lower")
+  valid_funcs <- c("middle", "upper", "lower", "outer")
   if (!is.call(fill_expr) || !(as.character(fill_expr[[1]]) %in% valid_funcs)) {
-    stop("Expected fill = ~middle(...), ~upper(...), or ~lower(...). Found: ", deparse(fill_expr))
+    stop("Expected fill = ~middle(...), ~upper(...), ~lower(...), or ~outer(...). Found: ", deparse(fill_expr))
   }
   
   func_type <- as.character(fill_expr[[1]])
@@ -141,6 +145,18 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
     cutoff_lower <- x_sorted[cutoff_idx]
     cutoff_upper <- NULL
     tail_prop <- prop
+    
+  } else if (func_type == "outer") {
+    # Two-tailed outer: cutoffs on both sides (shades both tails)
+    # outer(x, .05) shades the outer 5% total (2.5% in each tail)
+    # This is the complement of middle(x, .95)
+    tail_prop <- prop / 2
+    lower_idx <- floor(tail_prop * n) + 1
+    upper_idx <- ceiling((1 - tail_prop) * n)
+    lower_idx <- max(1, min(n, lower_idx))
+    upper_idx <- max(1, min(n, upper_idx))
+    cutoff_lower <- x_sorted[lower_idx]
+    cutoff_upper <- x_sorted[upper_idx]
   }
 
   # Build the plot to get y-axis range (needed for arrow positioning)

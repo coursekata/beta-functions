@@ -179,16 +179,16 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
     
     # Label with angled dashed line (only if labels=TRUE)
     if (labels) {
-      # Line endpoint stops before reaching the label
-      line_end_x <- cutoff_lower - x_span * 0.06
-      line_end_y <- line_top_y + y_range[2] * 0.22
+      # Fixed label position in upper-left white space (based on data range, not cutoff)
+      label_x <- x_range[1] + x_span * 0.08
+      label_y <- y_range[2] * 0.65
       
-      # Label position: just above where line ends
-      label_x <- cutoff_lower - x_span * 0.08
-      label_y <- line_end_y + y_range[2] * 0.06
+      # Line endpoint stops before reaching the label
+      line_end_x <- label_x + x_span * 0.02
+      line_end_y <- label_y - y_range[2] * 0.08
       
       plot <- plot +
-        # Angled dashed line from top of vertical line, stops before label
+        # Angled dashed line from top of vertical line toward label
         ggplot2::annotate("segment",
                           x = cutoff_lower, xend = line_end_x,
                           y = line_top_y, yend = line_end_y,
@@ -221,16 +221,16 @@ show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE
     
     # Label with angled dashed line (only if labels=TRUE)
     if (labels) {
-      # Line endpoint stops before reaching the label
-      line_end_x <- cutoff_upper + x_span * 0.06
-      line_end_y <- line_top_y + y_range[2] * 0.22
+      # Fixed label position in upper-right white space (based on data range, not cutoff)
+      label_x <- x_range[2] - x_span * 0.08
+      label_y <- y_range[2] * 0.65
       
-      # Label position: just above where line ends
-      label_x <- cutoff_upper + x_span * 0.08
-      label_y <- line_end_y + y_range[2] * 0.06
+      # Line endpoint stops before reaching the label
+      line_end_x <- label_x - x_span * 0.02
+      line_end_y <- label_y - y_range[2] * 0.08
       
       plot <- plot +
-        # Angled dashed line from top of vertical line, stops before label
+        # Angled dashed line from top of vertical line toward label
         ggplot2::annotate("segment",
                           x = cutoff_upper, xend = line_end_x,
                           y = line_top_y, yend = line_end_y,

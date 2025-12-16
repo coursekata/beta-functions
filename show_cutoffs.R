@@ -7,10 +7,10 @@
 #' Pipe this function after a gf_histogram() call to add downward-pointing
 #' triangular markers at the empirical quantile cutoffs. The function
 #' automatically extracts both the variable and the prop value from the
-#' middle(), upper(), lower(), or outer() call in your fill aesthetic.
+#' middle(), upper(), lower(), outer(), or tails() call in your fill aesthetic.
 #'
 #' @param plot A ggplot object (typically a histogram created with gf_histogram
-#'        with fill = ~middle(...), ~upper(...), ~lower(...), or ~outer(...))
+#'        with fill = ~middle(...), ~upper(...), ~lower(...), ~outer(...), or ~tails(...))
 #' @param color Color of the arrow markers (default: "#1e3a8a" - dark blue)
 #' @param size Size of the arrow markers (default: 4)
 #' @param labels Logical; whether to add text annotations explaining the cutoffs
@@ -18,6 +18,7 @@
 #'
 #' @return A ggplot object with arrow markers added
 #'
+#' @export
 #' @examples
 #' library(coursekata)
 #'
@@ -56,13 +57,13 @@ show_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE) {
   }
 
   if (is.null(fill_expr)) {
-    stop("Could not find fill aesthetic. Make sure you have fill = ~middle(...), ~upper(...), or ~lower(...) in your histogram.")
+    stop("Could not find fill aesthetic. Make sure you have fill = ~middle(...), ~upper(...), ~lower(...), ~outer(...), or ~tails(...) in your histogram.")
   }
 
   # Determine which function is being used
-  valid_funcs <- c("middle", "upper", "lower", "outer")
+  valid_funcs <- c("middle", "upper", "lower", "outer", "tails")
   if (!is.call(fill_expr) || !(as.character(fill_expr[[1]]) %in% valid_funcs)) {
-    stop("Expected fill = ~middle(...), ~upper(...), ~lower(...), or ~outer(...). Found: ", deparse(fill_expr))
+    stop("Expected fill = ~middle(...), ~upper(...), ~lower(...), ~outer(...), or ~tails(...). Found: ", deparse(fill_expr))
   }
   
   func_type <- as.character(fill_expr[[1]])
@@ -117,8 +118,9 @@ show_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE) {
   x_sorted <- sort(x_clean)
   n <- length(x_sorted)
   
-  if (func_type == "middle") {
+  if (func_type == "middle" || func_type == "tails") {
     # Two-tailed: cutoffs on both sides
+    # middle(x, .95) and tails(x, .95) have the same cutoffs
     alpha <- 1 - prop
     lower_idx <- floor(alpha / 2 * n) + 1
     upper_idx <- ceiling((1 - alpha / 2) * n)

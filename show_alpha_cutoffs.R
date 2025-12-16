@@ -1,4 +1,4 @@
-# show_alpha_cutoffs.R
+# show_cutoffs.R
 # A single pipe-friendly function to add arrow markers at alpha cutoff points
 # For use with coursekata package and ggformula histograms
 
@@ -23,21 +23,21 @@
 #'
 #' # Two-tailed middle: middle() - shades center, markers on both sides
 #' gf_histogram(~Thumb, data = Fingers, fill = ~middle(Thumb, .95)) %>%
-#'   show_alpha_cutoffs(labels = TRUE)
+#'   show_cutoffs(labels = TRUE)
 #'
 #' # Two-tailed outer: outer() - shades both tails, markers on both sides
 #' gf_histogram(~Thumb, data = Fingers, fill = ~outer(Thumb, .05)) %>%
-#'   show_alpha_cutoffs(labels = TRUE)
+#'   show_cutoffs(labels = TRUE)
 #'
 #' # One-tailed upper: upper() - marker on right only
 #' gf_histogram(~Thumb, data = Fingers, fill = ~upper(Thumb, .05)) %>%
-#'   show_alpha_cutoffs(labels = TRUE)
+#'   show_cutoffs(labels = TRUE)
 #'
 #' # One-tailed lower: lower() - marker on left only
 #' gf_histogram(~Thumb, data = Fingers, fill = ~lower(Thumb, .05)) %>%
-#'   show_alpha_cutoffs(labels = TRUE)
+#'   show_cutoffs(labels = TRUE)
 #'
-show_alpha_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE) {
+show_cutoffs <- function(plot, color = "#1e3a8a", size = 4, labels = FALSE) {
 
   # Extract the fill aesthetic to find the middle/upper/lower call
   fill_expr <- NULL

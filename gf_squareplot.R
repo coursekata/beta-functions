@@ -9,7 +9,7 @@
 #' gf_squareplot(~variable, data = mydata, bars = "outline")
 #'
 #' @section Main Parameters:
-#' - x: Formula (~variable) or vector of numeric data
+#' - x: Formula (~variable) or vector of numeric data or factor
 #' - data: Data frame (required if x is a formula)
 #' - bars: Display style - "none" (squares only), "outline" (outlined bars), "solid" (filled bars)
 #' - binwidth: Width of histogram bins (auto-calculated if NULL)
@@ -22,6 +22,10 @@
 #' - xrange: Set x-axis limits as c(min, max), e.g., xrange=c(-30, 30)
 #'   Note: xbreaks uses R's pretty() for "nice" numbers, so actual count may vary.
 #'   For exact control, use xbreaks=seq(-30, 30, by=5)
+#'
+#' @section Factor Handling:
+#' When x is a factor with numeric levels, all factor levels will be displayed on the
+#' x-axis even if some have zero counts. This ensures complete categorical display.
 #'
 #' @section DGP Overlay (show_dgp=TRUE):
 #' Adds educational overlay for teaching hypothesis testing:
@@ -37,6 +41,9 @@
 #'
 #' # With outlined bars
 #' gf_squareplot(~b1, data = sampling_dist, bars = "outline")
+#'
+#' # Factor with all levels displayed
+#' gf_squareplot(~rating, data = survey_data)  # shows 0-10 even if some empty
 #'
 #' # Teaching hypothesis testing with DGP overlay
 #' gf_squareplot(~b1, data = sampling_dist, 
@@ -88,11 +95,26 @@ gf_squareplot <- function(x,
     if (is.null(data)) stop("If `x` is a formula, supply `data=`.")
     vars <- all.vars(x)
     if (length(vars) != 1L) stop("Formula must be of form ~var.")
-    x_vec   <- data[[vars[1]]]
+    x_raw   <- data[[vars[1]]]
     x_label <- vars[1]
   } else {
-    x_vec   <- x
+    x_raw   <- x
     x_label <- NULL
+  }
+
+  # Handle factors - preserve all levels
+  is_factor <- is.factor(x_raw)
+  factor_levels <- NULL
+  if (is_factor) {
+    factor_levels <- levels(x_raw)
+    # Try to convert levels to numeric
+    factor_levels_num <- suppressWarnings(as.numeric(factor_levels))
+    if (any(is.na(factor_levels_num))) {
+      stop("Factor levels must be convertible to numeric for gf_squareplot")
+    }
+    x_vec <- as.numeric(as.character(x_raw))
+  } else {
+    x_vec <- x_raw
   }
 
   if (na.rm) x_vec <- x_vec[!is.na(x_vec)]
@@ -106,15 +128,36 @@ gf_squareplot <- function(x,
 
   # --- binwidth --------------------------------------------------------------
   if (is.null(binwidth)) {
-    rng <- range(x_vec)
-    binwidth <- if (diff(rng) == 0) 1 else diff(rng) / 30
+    # For factors, always use binwidth = 1
+    if (is_factor) {
+      binwidth <- 1
+    } else {
+      rng <- range(x_vec)
+      if (diff(rng) == 0) {
+        binwidth <- 1
+      } else {
+        # Check if data appears to be integer-valued
+        is_integer_like <- all(abs(x_vec - round(x_vec)) < 1e-7)
+        if (is_integer_like && diff(rng) <= 50) {
+          # For integer data with reasonable range, use bins of width 1
+          binwidth <- 1
+        } else {
+          binwidth <- diff(rng) / 30
+        }
+      }
+    }
   }
 
   # --- origin / boundary -----------------------------------------------------
   if (!is.null(boundary)) {
     origin <- boundary
   } else if (is.null(origin)) {
-    origin <- floor(min(x_vec) / binwidth) * binwidth
+    if (is_factor) {
+      # For factors, set origin to align with the minimum factor level
+      origin <- min(as.numeric(factor_levels))
+    } else {
+      origin <- floor(min(x_vec) / binwidth) * binwidth
+    }
   }
 
   # --- assign bins -----------------------------------------------------------
@@ -155,20 +198,39 @@ gf_squareplot <- function(x,
   breaks_y <- seq(0, max_plot_count, by = step_y)
 
   # --- x-range and breaks ----------------------------------------------------
-  rng_x <- range(x_vec)
-  if (diff(rng_x) == 0) rng_x <- rng_x + c(-0.5, 0.5)
-
-  x_limits <- rng_x   # used for x-axis and DGP axis
-
-  # Use xrange for breaks calculation if provided, otherwise use data range
-  breaks_range <- if (!is.null(xrange)) xrange else x_limits
-
-  if (is.null(xbreaks)) {
-    breaks_x <- pretty(breaks_range, n = 8)
-  } else if (is.numeric(xbreaks) && length(xbreaks) == 1L) {
-    breaks_x <- pretty(breaks_range, n = xbreaks)
+  if (is_factor) {
+    # Use factor levels for range and breaks
+    factor_levels_num <- as.numeric(factor_levels)
+    rng_x <- range(factor_levels_num)
+    x_limits <- rng_x
+    
+    # Use xrange if provided, otherwise use factor levels range
+    breaks_range <- if (!is.null(xrange)) xrange else x_limits
+    
+    # Always show all factor levels as breaks (unless user overrides)
+    if (is.null(xbreaks)) {
+      breaks_x <- factor_levels_num
+    } else if (is.numeric(xbreaks) && length(xbreaks) == 1L) {
+      breaks_x <- pretty(breaks_range, n = xbreaks)
+    } else {
+      breaks_x <- xbreaks
+    }
   } else {
-    breaks_x <- xbreaks
+    rng_x <- range(x_vec)
+    if (diff(rng_x) == 0) rng_x <- rng_x + c(-0.5, 0.5)
+    
+    x_limits <- rng_x   # used for x-axis and DGP axis
+    
+    # Use xrange for breaks calculation if provided, otherwise use data range
+    breaks_range <- if (!is.null(xrange)) xrange else x_limits
+    
+    if (is.null(xbreaks)) {
+      breaks_x <- pretty(breaks_range, n = 8)
+    } else if (is.numeric(xbreaks) && length(xbreaks) == 1L) {
+      breaks_x <- pretty(breaks_range, n = xbreaks)
+    } else {
+      breaks_x <- xbreaks
+    }
   }
 
   library(ggplot2)

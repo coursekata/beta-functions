@@ -16,6 +16,18 @@
 #' - mincount: Minimum y-axis height (useful for consistent scaling across plots)
 #' - fill: Color for rectangles/bars (default: "#7fcecc")
 #' - alpha: Transparency (0-1)
+#' - auto_subdivide: If TRUE (default), bins with >75 stacked rectangles are automatically
+#'   split into multiple sub-columns to keep rectangles countable. If FALSE, switches to
+#'   solid bars instead when counts are high.
+#'
+#' @section Handling Large Samples:
+#' By default (auto_subdivide = TRUE), the function maintains countable rectangles even with
+#' large samples by subdividing bins horizontally when a single bin would have >75 stacked
+#' rectangles. For example, if a bin has 150 observations, they'll be arranged in 2 sub-columns
+#' of 75 each. This preserves the pedagogical value of countable rectangles while handling
+#' larger datasets. When subdivision occurs, bars are automatically outlined to show bin
+#' boundaries clearly. Set auto_subdivide = FALSE to use traditional solid bars for large
+#' samples instead.
 #'
 #' @section X-Axis Control:
 #' - xbreaks: Number of breaks (e.g., xbreaks=10) or vector of specific positions
@@ -57,8 +69,16 @@
 #'               binwidth = 2, 
 #'               origin = 0)
 #'
+#' # Large sample with subdivided bins (default)
+#' gf_squareplot(~p_0.5, data = large_df)  # auto splits into sub-columns
+#'
+#' # Large sample with solid bars (opt out of subdivision)
+#' gf_squareplot(~p_0.5, data = large_df, auto_subdivide = FALSE)
+#'
 #' @section Teaching Notes:
 #' - Individual squares make sample size and distribution shape concrete
+#' - For large samples, bins automatically subdivide horizontally to keep rectangles countable
+#'   (disable with auto_subdivide = FALSE for traditional solid bars)
 #' - DGP overlay emphasizes difference between population parameters (Greek letters) 
 #'   and sample estimates (regular letters)
 #' - Red markers clearly indicate null hypothesis (β₁ = 0) vs. observed estimate (b₁)
@@ -84,7 +104,8 @@ gf_squareplot <- function(x,
                           xbreaks  = NULL,
                           xrange   = NULL,
                           show_dgp = FALSE,
-                          show_mean = FALSE) {
+                          show_mean = FALSE,
+                          auto_subdivide = TRUE) {
 
   bars <- match.arg(bars)
   dgp_color <- "#003d70"
@@ -92,10 +113,18 @@ gf_squareplot <- function(x,
   # --- extract x vector ------------------------------------------------------
   is_formula <- inherits(x, "formula")
   if (is_formula) {
-    if (is.null(data)) stop("If `x` is a formula, supply `data=`.")
     vars <- all.vars(x)
     if (length(vars) != 1L) stop("Formula must be of form ~var.")
-    x_raw   <- data[[vars[1]]]
+    
+    if (is.null(data)) {
+      # Try to find variable in parent environment
+      x_raw <- tryCatch(
+        get(vars[1], envir = parent.frame()),
+        error = function(e) stop("Variable '", vars[1], "' not found. Either supply data= or ensure variable exists in environment.")
+      )
+    } else {
+      x_raw <- data[[vars[1]]]
+    }
     x_label <- vars[1]
   } else {
     x_raw   <- x
@@ -120,11 +149,6 @@ gf_squareplot <- function(x,
   if (na.rm) x_vec <- x_vec[!is.na(x_vec)]
   if (!is.numeric(x_vec)) stop("`x` must be numeric.")
   if (length(x_vec) == 0) stop("`x` has no non-missing values.")
-
-  # For large samples (>1000), default to solid bars to avoid excessive white space
-  if (length(x_vec) > 1000 && bars %in% c("none", "outline")) {
-    bars <- "solid"
-  }
 
   # --- binwidth --------------------------------------------------------------
   if (is.null(binwidth)) {
@@ -162,24 +186,100 @@ gf_squareplot <- function(x,
 
   # --- assign bins -----------------------------------------------------------
   bin  <- floor((x_vec - origin) / binwidth)
-  xmin <- origin + bin * binwidth
-  xmax <- xmin + binwidth
-
+  
+  # Calculate how many rectangles per bin
+  counts_per_bin <- table(bin)
+  max_in_any_bin <- if (length(counts_per_bin) > 0) max(counts_per_bin) else 0
+  
+  # Determine subdivision strategy based on auto_subdivide parameter
+  if (auto_subdivide && max_in_any_bin > 75) {
+    # Subdivide bins to keep rectangles countable
+    # Threshold of ~75 rectangles per sub-column seems reasonable for teaching
+    n_cols <- ceiling(max_in_any_bin / 75)
+    
+    # Force outlined bars so bin boundaries are visible
+    if (bars == "none") {
+      bars <- "outline"
+    }
+  } else if (!auto_subdivide && max_in_any_bin > 75 && bars %in% c("none", "outline")) {
+    # User opted out of subdivision - just switch to solid bars
+    n_cols <- 1
+    bars <- "solid"
+  } else {
+    # No subdivision needed (counts are low enough)
+    n_cols <- 1
+  }
+  
+  # Effective width of each sub-column
+  sub_binwidth <- binwidth / n_cols
+  
+  # Assign each observation to a slot within its bin (0-indexed)
   slot <- ave(x_vec, bin, FUN = function(z) seq_along(z) - 1L)
-  ymin <- slot
-  ymax <- slot + 1
+  
+  # Stack rectangles row by row (left to right), not column by column
+  # Row number (y position)
+  row_num <- floor(slot / n_cols)
+  # Column number within that row (x position within bin)
+  col_num <- slot %% n_cols
+  
+  # Calculate rectangle positions
+  xmin <- origin + bin * binwidth + col_num * sub_binwidth
+  xmax <- xmin + sub_binwidth
+  ymin <- row_num
+  ymax <- row_num + 1
 
-  rect_df <- data.frame(xmin, xmax, ymin, ymax)
+  rect_df <- data.frame(xmin, xmax, ymin, ymax, bin)
 
   # --- bar counts ------------------------------------------------------------
+  # For bar outlines, we need the full bin boundaries (not sub-columns)
+  # and the maximum height across all sub-columns in that bin
   if (nrow(rect_df) > 0) {
-    bar_df <- aggregate(ymax ~ xmin + xmax, rect_df, max)
-    names(bar_df)[3] <- "count"
+    # Group by bin to get total count and max height per bin
+    bin_summary <- aggregate(ymax ~ bin, rect_df, max)
+    names(bin_summary)[2] <- "count"
+    
+    # Create bar_df with full bin boundaries
+    bar_df <- data.frame(
+      xmin = origin + bin_summary$bin * binwidth,
+      xmax = origin + (bin_summary$bin + 1) * binwidth,
+      count = bin_summary$count
+    )
+    
     max_count <- max(bar_df$count)
   } else {
-    bar_df <- rect_df[FALSE, ]
-    bar_df$count <- 0
+    bar_df <- data.frame(xmin = numeric(0), xmax = numeric(0), count = numeric(0))
     max_count <- 0
+  }
+  
+  # For factors, ensure all levels are represented in bar_df (even with count=0)
+  if (is_factor && binwidth == 1) {
+    # Get all expected bins based on factor levels
+    factor_levels_num <- as.numeric(factor_levels)
+    all_bins <- floor((factor_levels_num - origin) / binwidth)
+    
+    # Create complete bar_df with all factor levels
+    complete_bar_df <- data.frame(
+      bin = all_bins,
+      xmin = origin + all_bins * binwidth,
+      xmax = origin + (all_bins + 1) * binwidth,
+      count = 0
+    )
+    
+    # Merge with actual counts
+    if (nrow(bar_df) > 0) {
+      # Update counts for bins that have data
+      for (i in seq_len(nrow(bar_df))) {
+        idx <- which(complete_bar_df$xmin == bar_df$xmin[i])
+        if (length(idx) > 0) {
+          complete_bar_df$count[idx] <- bar_df$count[i]
+        }
+      }
+    }
+    
+    bar_df <- complete_bar_df[, c("xmin", "xmax", "count")]
+    if (nrow(bar_df) > 0) {
+      max_count <- max(max_count, max(bar_df$count))
+    }
   }
 
   max_plot_count <- max(max_count, mincount %||% max_count)

@@ -16,18 +16,17 @@
 #' - mincount: Minimum y-axis height (useful for consistent scaling across plots)
 #' - fill: Color for rectangles/bars (default: "#7fcecc")
 #' - alpha: Transparency (0-1)
-#' - auto_subdivide: If TRUE (default), bins with >75 stacked rectangles are automatically
-#'   split into multiple sub-columns to keep rectangles countable. If FALSE, switches to
+#' - auto_subdivide: If TRUE, bins with >75 stacked rectangles are automatically
+#'   split into multiple sub-columns to keep rectangles countable. If FALSE (default), switches to
 #'   solid bars instead when counts are high.
 #'
 #' @section Handling Large Samples:
-#' By default (auto_subdivide = TRUE), the function maintains countable rectangles even with
-#' large samples by subdividing bins horizontally when a single bin would have >75 stacked
-#' rectangles. For example, if a bin has 150 observations, they'll be arranged in 2 sub-columns
-#' of 75 each. This preserves the pedagogical value of countable rectangles while handling
-#' larger datasets. When subdivision occurs, bars are automatically outlined to show bin
-#' boundaries clearly. Set auto_subdivide = FALSE to use traditional solid bars for large
-#' samples instead.
+#' By default (auto_subdivide = FALSE), the function switches to solid bars when any bin
+#' has >75 stacked rectangles. Alternatively, set auto_subdivide = TRUE to maintain countable
+#' rectangles even with large samples by subdividing bins horizontally. For example, if a bin
+#' has 150 observations, they'll be arranged in 2 sub-columns of 75 each. This preserves the
+#' pedagogical value of countable rectangles while handling larger datasets. When subdivision
+#' occurs, bars are automatically outlined to show bin boundaries clearly.
 #'
 #' @section X-Axis Control:
 #' - xbreaks: Number of breaks (e.g., xbreaks=10) or vector of specific positions
@@ -69,16 +68,16 @@
 #'               binwidth = 2, 
 #'               origin = 0)
 #'
-#' # Large sample with subdivided bins (default)
-#' gf_squareplot(~p_0.5, data = large_df)  # auto splits into sub-columns
+#' # Large sample with solid bars (default)
+#' gf_squareplot(~p_0.5, data = large_df)  # switches to solid bars when counts > 75
 #'
-#' # Large sample with solid bars (opt out of subdivision)
-#' gf_squareplot(~p_0.5, data = large_df, auto_subdivide = FALSE)
+#' # Large sample with subdivided bins (opt in to subdivision)
+#' gf_squareplot(~p_0.5, data = large_df, auto_subdivide = TRUE)
 #'
 #' @section Teaching Notes:
 #' - Individual squares make sample size and distribution shape concrete
-#' - For large samples, bins automatically subdivide horizontally to keep rectangles countable
-#'   (disable with auto_subdivide = FALSE for traditional solid bars)
+#' - For large samples, function switches to solid bars by default when counts exceed 75
+#'   (enable subdivision with auto_subdivide = TRUE to keep rectangles countable)
 #' - DGP overlay emphasizes difference between population parameters (Greek letters) 
 #'   and sample estimates (regular letters)
 #' - Red markers clearly indicate null hypothesis (β₁ = 0) vs. observed estimate (b₁)
@@ -105,7 +104,7 @@ gf_squareplot <- function(x,
                           xrange   = NULL,
                           show_dgp = FALSE,
                           show_mean = FALSE,
-                          auto_subdivide = TRUE) {
+                          auto_subdivide = FALSE) {
 
   bars <- match.arg(bars)
   dgp_color <- "#003d70"

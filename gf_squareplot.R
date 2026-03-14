@@ -12,6 +12,7 @@
 #' - x: Formula (~variable) or vector of numeric data or factor
 #' - data: Data frame (required if x is a formula)
 #' - bars: Display style - "none" (squares only), "outline" (outlined bars), "solid" (filled bars)
+#' - bins: Number of bins (as in gf_histogram; ignored if binwidth is supplied)
 #' - binwidth: Width of histogram bins (auto-calculated if NULL)
 #' - mincount: Minimum y-axis height (useful for consistent scaling across plots)
 #' - fill: Color for rectangles/bars (default: "#7fcecc")
@@ -68,6 +69,9 @@
 #'               binwidth = 2, 
 #'               origin = 0)
 #'
+#' # Histogram-style bin count
+#' gf_squareplot(~values, data = mydata, bins = 20)
+#'
 #' # Large sample with solid bars (default)
 #' gf_squareplot(~p_0.5, data = large_df)  # switches to solid bars when counts > 75
 #'
@@ -91,6 +95,7 @@
 
 gf_squareplot <- function(x,
                           data     = NULL,
+                          bins     = NULL,
                           binwidth = NULL,
                           origin   = NULL,
                           boundary = NULL,
@@ -108,6 +113,18 @@ gf_squareplot <- function(x,
 
   bars <- match.arg(bars)
   dgp_color <- "#003d70"
+  origin_supplied <- !is.null(origin)
+  boundary_supplied <- !is.null(boundary)
+
+  if (!is.null(bins)) {
+    if (!is.numeric(bins) || length(bins) != 1L || is.na(bins) || bins <= 0) {
+      stop("`bins` must be one positive number.")
+    }
+    if (abs(bins - round(bins)) > 1e-7) {
+      stop("`bins` must be a whole number.")
+    }
+    bins <- as.integer(round(bins))
+  }
 
   # --- extract x vector ------------------------------------------------------
   is_formula <- inherits(x, "formula")
@@ -149,10 +166,21 @@ gf_squareplot <- function(x,
   if (!is.numeric(x_vec)) stop("`x` must be numeric.")
   if (length(x_vec) == 0) stop("`x` has no non-missing values.")
 
+  if (!is.null(binwidth) && !is.null(bins)) {
+    warning("`binwidth` overrides `bins` in gf_squareplot().")
+  }
+
   # --- binwidth --------------------------------------------------------------
   if (is.null(binwidth)) {
-    # For factors, always use binwidth = 1
-    if (is_factor) {
+    if (!is.null(bins)) {
+      rng <- range(x_vec)
+      if (diff(rng) == 0) {
+        binwidth <- 1
+      } else {
+        binwidth <- diff(rng) / bins
+      }
+    } else if (is_factor) {
+      # For factors, always use binwidth = 1
       binwidth <- 1
     } else {
       rng <- range(x_vec)
@@ -175,7 +203,10 @@ gf_squareplot <- function(x,
   if (!is.null(boundary)) {
     origin <- boundary
   } else if (is.null(origin)) {
-    if (is_factor) {
+    if (!is.null(bins)) {
+      # Match histogram behavior when bins are requested.
+      origin <- min(x_vec)
+    } else if (is_factor) {
       # For factors, set origin to align with the minimum factor level
       origin <- min(as.numeric(factor_levels))
     } else {
@@ -184,7 +215,12 @@ gf_squareplot <- function(x,
   }
 
   # --- assign bins -----------------------------------------------------------
-  bin  <- floor((x_vec - origin) / binwidth)
+  # Small epsilon prevents floating-point noise from creating off-by-one bins.
+  bin <- floor((x_vec - origin + (binwidth * 1e-9)) / binwidth)
+  if (!is.null(bins) && !origin_supplied && !boundary_supplied) {
+    # Keep max values in the last requested bin when bins is auto-derived.
+    bin <- pmin(bin, bins - 1L)
+  }
   
   # Calculate how many rectangles per bin
   counts_per_bin <- table(bin)

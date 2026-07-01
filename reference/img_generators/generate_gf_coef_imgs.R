@@ -1,12 +1,14 @@
 library(coursekata)
 library(ggformula)
 library(ggplot2)
-source("gf_lm_cat.R")
-source("gf_coef.R")
 
-img_dir <- "reference/img"
+source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_lm_cat.R")
+source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_coef.R")
 
-save_plot <- function(p, filename, width = 5, height = 4) {
+library(here)
+img_dir <- here("reference", "img")
+
+save_plot <- function(p, filename, width = 4.5, height = 3) {
   ggsave(file.path(img_dir, filename), plot = p, width = width, height = height, dpi = 150)
   cat("saved:", filename, "\n")
 }
@@ -70,9 +72,9 @@ save_plot(p7, "gf_coef_no_b0.png")
 
 # ── 8. Custom color ───────────────────────────────────────────────────────────
 p8 <- gf_jitter(later_anxiety ~ condition, data = er, width = 0.1, alpha = 0.4) %>%
-  gf_lm_cat(color = "steelblue") %>%
-  gf_coef(color = "steelblue") +
-  labs(title = "Custom color: steelblue")
+  gf_lm_cat(color = "blue") %>%
+  gf_coef(color = "blue") +
+  labs(title = "Custom color: blue")
 save_plot(p8, "gf_coef_custom_color.png")
 
 cat("\nAll images saved to", img_dir, "\n")

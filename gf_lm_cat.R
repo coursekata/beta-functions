@@ -18,7 +18,7 @@
 #   linewidth - segment linewidth
 #   ...       - additional arguments passed to geom_segment
 
-gf_lm_cat <- function(p, ..., width = 0.4, color = "steelblue", linewidth = 1) {
+gf_lm_cat <- function(p, ..., width = 0.4, color = "663abe", linewidth = 1) {
 
   # Freeze the plot on first touch: evaluate y and x once and lock the values
   # into hidden columns (.gf_y / .gf_x) in p$data, then update the plot and

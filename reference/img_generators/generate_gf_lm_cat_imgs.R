@@ -42,6 +42,10 @@ p4 <- gf_jitter(shuffle(later_anxiety) ~ condition, data = er,
   labs(title = "Shuffled y: segments reflect the shuffle")
 save_plot(p4, "gf_lm_cat_shuffle.png")
 
+gf_jitter(shuffle(later_anxiety) ~ condition, data = er,
+          width = 0.1, alpha = 0.4) %>%
+  gf_lm_cat()
+
 # ── 5. Custom width ───────────────────────────────────────────────────────────
 p5 <- gf_jitter(later_anxiety ~ condition, data = er, width = 0.1, alpha = 0.4) %>%
   gf_lm_cat(width = 0.8) +

@@ -140,6 +140,17 @@ gf_b <- gf_coef
   # gf_lm, etc. produce layers whose data frames are NOT identical to p$data).
   orig_data <- p$data
 
+  # Capture axis label strings now so we can restore them after freezing.
+  # ggplot2 derives axis titles from mapping expressions; replacing them with
+  # .gf_y/.gf_x would show those internal names instead of the original formula
+  # terms (e.g. "shuffle(later_anxiety)" → ".gf_y"). Try plot-level mapping
+  # first; fall back to first layer if the plot mapping is NULL.
+  .label_from <- function(quo) tryCatch(rlang::as_label(quo), error = function(e) NULL)
+  orig_y_label <- .label_from(p$mapping$y) %||%
+    if (length(p$layers)) .label_from(p$layers[[1]]$mapping$y)
+  orig_x_label <- .label_from(p$mapping$x) %||%
+    if (length(p$layers)) .label_from(p$layers[[1]]$mapping$x)
+
   y_vals <- rlang::eval_tidy(p$mapping$y, data = orig_data)
   x_vals <- rlang::eval_tidy(p$mapping$x, data = orig_data)
 
@@ -168,6 +179,10 @@ gf_b <- gf_coef
       if (!is.null(lm[["x"]])) p$layers[[i]]$mapping[["x"]] <- frozen_x
     }
   }
+
+  # Restore labels so .gf_y / .gf_x never appear in axis titles
+  if (!is.null(orig_y_label)) p$labels$y <- orig_y_label
+  if (!is.null(orig_x_label)) p$labels$x <- orig_x_label
 
   p
 }

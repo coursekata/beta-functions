@@ -82,6 +82,16 @@ gf_lm_cat <- function(p, ..., width = 0.4, color = "#663abe", linewidth = 1) {
 
   orig_data <- p$data
 
+  # Capture axis label strings before freezing. ggplot2 derives axis titles
+  # from mapping expressions; replacing them with .gf_y/.gf_x would show those
+  # internal names instead of the original formula terms (e.g. "shuffle(Y)").
+  # Try plot-level mapping first, fall back to first layer if NULL.
+  .label_from <- function(quo) tryCatch(rlang::as_label(quo), error = function(e) NULL)
+  orig_y_label <- .label_from(p$mapping$y) %||%
+    if (length(p$layers)) .label_from(p$layers[[1]]$mapping$y)
+  orig_x_label <- .label_from(p$mapping$x) %||%
+    if (length(p$layers)) .label_from(p$layers[[1]]$mapping$x)
+
   y_vals <- rlang::eval_tidy(p$mapping$y, data = orig_data)
   x_vals <- rlang::eval_tidy(p$mapping$x, data = orig_data)
 
@@ -102,6 +112,10 @@ gf_lm_cat <- function(p, ..., width = 0.4, color = "#663abe", linewidth = 1) {
       if (!is.null(lm[["x"]])) p$layers[[i]]$mapping[["x"]] <- frozen_x
     }
   }
+
+  # Restore labels so .gf_y / .gf_x never appear in axis titles
+  if (!is.null(orig_y_label)) p$labels$y <- orig_y_label
+  if (!is.null(orig_x_label)) p$labels$x <- orig_x_label
 
   p
 }

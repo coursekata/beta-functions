@@ -127,6 +127,10 @@ gf_b <- gf_coef
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
+# .freeze_plot_xy is duplicated here so gf_coef.R is self-contained (single
+# source() call). TODO (coursekata-r package): replace this block in gf_lm.R,
+# gf_lm_cat.R, and gf_coef.R with a shared internal function from freeze_plot.R.
+
 # Evaluate y and x expressions ONCE and lock them into hidden columns
 # (.gf_y and .gf_x) in p$data, replacing the plot-level and layer-level
 # mappings so that the final display and all downstream functions all use the
@@ -258,17 +262,36 @@ gf_b <- gf_coef
   if (length(coefs) < 2) return(out)
   b1_val <- coefs[[2]]
 
-  x_span <- diff(range(x_vals, na.rm = TRUE))
-  x_lo   <- min(x_vals, na.rm = TRUE)
+  # Use the effective display range, not just the data range. When show_b0_label
+  # is TRUE, expand_limits(x = 0) widens the axis to include 0. Computing run
+  # and run_x from the narrower data range would make the annotation look tiny
+  # on the expanded axis.
+  x_data_range    <- range(x_vals, na.rm = TRUE)
+  x_display_range <- if (show_b0_label) range(c(x_data_range, 0)) else x_data_range
+  x_span          <- diff(x_display_range)
+  x_lo            <- x_display_range[1]
 
   # Auto-select a nice run unit near 10% of the x span
   if (is.null(run)) {
     run <- .nice_run(x_span)
   }
 
-  # Position the annotation: start at 15% from left so the run fits comfortably
+  # Position the annotation. When b0 is visible at x=0, choose between a
+  # left-third and right-third candidate and pick whichever places the
+  # annotation center farther from x=0, so the two labels don't crowd each
+  # other regardless of where 0 falls on the axis.
   if (is.null(run_x)) {
-    run_x <- x_lo + 0.15 * x_span
+    if (show_b0_label) {
+      run_x_left  <- x_lo + 0.15 * x_span
+      run_x_right <- x_lo + 0.60 * x_span
+      if (abs(run_x_left + run / 2) >= abs(run_x_right + run / 2)) {
+        run_x <- run_x_left
+      } else {
+        run_x <- run_x_right
+      }
+    } else {
+      run_x <- x_lo + 0.15 * x_span
+    }
   }
 
   # y values at the left and right edges of the run

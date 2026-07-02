@@ -60,7 +60,10 @@ gf_lm_cat <- function(p, ..., width = 0.4, color = "#663abe", linewidth = 1) {
 }
 
 
-# ── shared helpers ────────────────────────────────────────────────────────────
+# ── .freeze_plot_xy ───────────────────────────────────────────────────────────
+# Duplicated here so gf_lm_cat.R is self-contained (single source() call).
+# TODO (coursekata-r package): replace this block in gf_lm.R, gf_lm_cat.R,
+# and gf_coef.R with a shared internal function from freeze_plot.R.
 
 # Evaluate y and x expressions ONCE and lock them into hidden columns
 # (.gf_y / .gf_x) in p$data AND in each layer's own data frame, then replace

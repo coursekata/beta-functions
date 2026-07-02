@@ -157,13 +157,13 @@ gf_jitter(later_anxiety ~ condition, data = er, width = 0.1) %>%
 
 ```r
 gf_jitter(later_anxiety ~ condition, data = er, width = 0.1) %>%
-  gf_lm_cat(color = "steelblue") %>%
-  gf_coef(color = "steelblue")
+  gf_lm_cat(color = "blue") %>%
+  gf_coef(color = "blue")
 ```
 
 ![](img/gf_coef_custom_color.png)
 
-*Note:* `color` controls arrows, lines, and the b0 dot. Text labels stay black by default (`label_color = "black"`). Pass `label_color = "steelblue"` to match them too.
+*Note:* `color` controls arrows, lines, and the b0 dot. Text labels stay black by default (`label_color = "black"`). Pass `label_color = "blue"` to match them too.
 
 ---
 
@@ -198,7 +198,7 @@ See also:
 |---|---|---|
 | `p` | *(required)* | An existing ggformula or ggplot2 plot. |
 | `model` | `NULL` | A fitted `lm()` object. If `NULL`, a model is fit automatically from the plot's data and mapping. |
-| `color` | `"#c4aeee"` | Color for arrows, lines, and the b0 dot. Does **not** affect text labels. |
+| `color` | `"#b599ed"` | Color for arrows, lines, and the b0 dot. Does **not** affect text labels. |
 | `label_color` | `"black"` | Color for all text labels (b0, b1, run value). Separated from `color` so labels stay readable regardless of arrow color. |
 | `b0_color` | `NULL` | Color for the b0 hollow dot (continuous x only). Defaults to `color`. |
 | `b0_alpha` | `0.3` | Transparency of the b0 horizontal reference line (categorical x only). |
@@ -220,16 +220,3 @@ See also:
 - **Multiple predictors:** Only b0 and b1 are annotated for continuous x. For categorical x with k groups, b0 through b(k−1) are all annotated.
 - **Intercept-only models:** `lm(y ~ 1, data = d)` is supported — a horizontal line at the grand mean is drawn and labeled b0.
 
----
-
-## How it handles `shuffle()`
-
-One common classroom use case is to help students understand shuffle:
-
-```r
-gf_jitter(shuffle(later_anxiety) ~ condition, data = er, width = 0.1) %>%
-  gf_lm_cat() %>%
-  gf_coef()
-```
-
-`gf_coef()` **freezes** the y and x values the first time it encounters the plot: it evaluates the formula expressions once, stores the result in hidden columns (`.gf_y`, `.gf_x`), and redirects all data layers to those frozen values. Every overlay then reads from the same snapshot, so the arrows always match the dots.

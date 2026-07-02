@@ -43,7 +43,7 @@
 #   run_x           - (continuous) override the x position of the annotation
 
 gf_coef <- function(p, model = NULL,
-                    color = "#c4aeee",
+                    color = "#b599ed",
                     label_color = "black",
                     b0_color = NULL,
                     b0_alpha = 0.3,

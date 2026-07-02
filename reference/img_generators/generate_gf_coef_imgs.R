@@ -2,11 +2,14 @@ library(coursekata)
 library(ggformula)
 library(ggplot2)
 
-source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_lm_cat.R")
-source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_coef.R")
-
 library(here)
 img_dir <- here("reference", "img")
+
+#source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_lm_cat.R")
+#source("https://raw.githubusercontent.com/coursekata/beta-functions/refs/heads/main/gf_coef.R")
+
+source("gf_lm_cat.R")
+source("gf_coef.R")
 
 save_plot <- function(p, filename, width = 4.5, height = 3) {
   ggsave(file.path(img_dir, filename), plot = p, width = width, height = height, dpi = 150)

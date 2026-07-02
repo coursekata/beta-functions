@@ -50,19 +50,6 @@ gf_shuffle_grid(later_anxiety ~ condition, data = er)
 
 ---
 
-### Categorical x: with model overlay
-
-```r
-set.seed(7)
-gf_shuffle_grid(later_anxiety ~ condition, data = er, show_model = TRUE)
-```
-
-![](img/gf_sg_cat_model.png)
-
-*What to look for:* The group-mean segments make the comparison easier to read. In the real panel the segments are farther apart; in the shuffled panels they hover close together near the grand mean.
-
----
-
 ### Categorical x: with coefficient annotations
 
 ```r

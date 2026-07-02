@@ -20,12 +20,7 @@ set.seed(7)
 p1 <- gf_shuffle_grid(later_anxiety ~ condition, data = er)
 save_plot(p1, "gf_sg_cat_default.png")
 
-# ── 2. Categorical x: with model overlay ─────────────────────────────────────
-set.seed(7)
-p2 <- gf_shuffle_grid(later_anxiety ~ condition, data = er, show_model = TRUE)
-save_plot(p2, "gf_sg_cat_model.png")
-
-# ── 3. Categorical x: with coefficient annotations ───────────────────────────
+# ── 2. Categorical x: with coefficient annotations ───────────────────────────
 set.seed(7)
 p3 <- gf_shuffle_grid(later_anxiety ~ condition, data = er,
                       show_model = TRUE, show_coef = TRUE)

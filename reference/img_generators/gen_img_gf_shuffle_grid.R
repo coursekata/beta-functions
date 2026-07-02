@@ -3,7 +3,7 @@ library(ggformula)
 library(ggplot2)
 library(here)
 
-here::i_am("reference/img_generators/generate_gf_shuffle_grid_imgs.R")
+here::i_am("reference/img_generators/gen_img_gf_shuffle_grid.R")
 img_dir <- here("reference", "img")
 
 source(here("gf_lm_cat.R"))

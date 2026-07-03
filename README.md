@@ -28,6 +28,7 @@ These are available now via `source()`. Each has a reference page with examples,
 | `gf_shuffle_grid()` | [`gf_shuffle_grid.R`](gf_shuffle_grid.R) | [`reference/gf_shuffle_grid.md`](reference/gf_shuffle_grid.md) |
 | `gf_reduce()`, `gf_square_reduce()`, `gf_squareduce()` | [`gf_reduce.R`](gf_reduce.R) | [`reference/gf_reduce.md`](reference/gf_reduce.md) |
 | `gf_sd_ruler()` (extended) | [`gf_sd_ruler.R`](gf_sd_ruler.R) | [`reference/gf_sd_ruler.md`](reference/gf_sd_ruler.md) |
+| `gf_cutoffs()` | [`gf_cutoffs.R`](gf_cutoffs.R) | — |
 
 > **`gf_sd_ruler()` note:** the base version is already in `library(coursekata)`. Source `gf_sd_ruler.R` here to get the extended version with histogram support.
 

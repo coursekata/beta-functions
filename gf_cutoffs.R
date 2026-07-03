@@ -205,13 +205,23 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
     # Place marker at the boundary value on the TRUE side of the transition
     x0 <- if (diffs[i] == 1L) x_sorted[i + 1L] else x_sorted[i]
 
-    # Label the smaller (tail) side
-    if (left_prop <= right_prop) {
+    # Label the smaller (tail) side.
+    # Tie (e.g. upper(.5) or lower(.5)): use the transition direction —
+    # F→T means TRUE is to the right ("upper"); T→F means TRUE is to the left ("lower").
+    if (left_prop < right_prop) {
       data.frame(x = x0, tail_prop = left_prop,  side = "lower",
                  stringsAsFactors = FALSE)
-    } else {
+    } else if (right_prop < left_prop) {
       data.frame(x = x0, tail_prop = right_prop, side = "upper",
                  stringsAsFactors = FALSE)
+    } else {
+      if (diffs[i] == 1L) {
+        data.frame(x = x0, tail_prop = right_prop, side = "upper",
+                   stringsAsFactors = FALSE)
+      } else {
+        data.frame(x = x0, tail_prop = left_prop,  side = "lower",
+                   stringsAsFactors = FALSE)
+      }
     }
   })
 
@@ -225,8 +235,8 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
 # Format a tail proportion for display, snapping common alpha levels to
 # clean strings (e.g. 0.025000001 → ".025").
 .format_prop <- function(p) {
-  snaps  <- c(0.005, 0.01, 0.025, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
-  labels <- c(".005", ".01", ".025", ".05", ".10", ".15", ".20", ".25", ".30")
+  snaps  <- c(0.005, 0.01, 0.025, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50)
+  labels <- c(".005", ".01", ".025", ".05", ".10", ".15", ".20", ".25", ".30", ".35", ".40", ".45", ".50")
   idx <- which(abs(snaps - p) < 1e-9)
   if (length(idx)) labels[[idx[1]]] else format(round(p, 3), nsmall = 3)
 }

@@ -1,6 +1,6 @@
 # `gf_sd_ruler()` — Visualize Standard Deviation on a Plot
 
-**Source:** [`library(coursekata)`](https://github.com/coursekata/coursekata-r) — graduated from beta.
+**Source:** [`library(coursekata)`](https://github.com/coursekata/coursekata-r) for the base version. Extended prototype with histogram support: [`gf_sd_ruler.R`](../gf_sd_ruler.R) (source this to override).
 
 ---
 
@@ -17,8 +17,16 @@ The core teaching use: students can *see* that SD is just a residual of typical 
 ```r
 library(coursekata)
 
+# Scatter / jitter plot (y-axis outcome) — in coursekata package
 gf_point(median_time ~ student_id, data = no_feedback_data) %>%
   gf_model(lm(median_time ~ NULL, data = no_feedback_data)) %>%
+  gf_sd_ruler()
+
+# Histogram (x-axis outcome) — requires extended prototype
+source("gf_sd_ruler.R")
+
+gf_histogram(~ Thumb, data = Fingers) %>%
+  gf_model(lm(Thumb ~ NULL, data = Fingers)) %>%
   gf_sd_ruler()
 ```
 
@@ -100,6 +108,50 @@ gf_point(Thumb ~ Height, data = Fingers, alpha = 0.4) %>%
 ![](img/gf_sd_ruler_x_placement.png)
 
 *What to look for:* With continuous x, `where = "mean"` places the ruler at the mean of Height — roughly the center of the data cloud. This makes it easy to see the ruler without it overlapping the edges of the plot.
+
+---
+
+### Histogram (extended prototype)
+
+> Source `gf_sd_ruler.R` to get histogram support — the coursekata-r version does not yet include this.
+
+```r
+source("gf_sd_ruler.R")  # extended version
+
+gf_histogram(~ Thumb, data = Fingers) %>%
+  gf_model(lm(Thumb ~ NULL, data = Fingers)) %>%
+  gf_sd_ruler(color = "red", size = 2)
+```
+
+![](img/gf_sd_ruler_histogram.png)
+
+*What to look for:* `gf_model()` adds a vertical line at the mean. `gf_sd_ruler()` auto-detects that the outcome is on the x-axis and draws a **horizontal** segment running from the mean to mean + SD along the baseline. Students can see how wide one standard deviation is in the same units as the histogram bins.
+
+---
+
+### Histogram: comparing two distributions
+
+```r
+source("gf_sd_ruler.R")
+
+p_feedback <- gf_histogram(~ median_time, data = feedback_data, binwidth = 1) %>%
+  gf_lims(x = c(0, 30)) %>%
+  gf_labs(title = "feedback") %>%
+  gf_model(feedback_empty) %>%
+  gf_sd_ruler(color = "red", size = 2)
+
+p_no_feedback <- gf_histogram(~ median_time, data = no_feedback_data, binwidth = 1) %>%
+  gf_lims(x = c(0, 30)) %>%
+  gf_labs(title = "no_feedback") %>%
+  gf_model(no_feedback_empty) %>%
+  gf_sd_ruler(color = "red", size = 2)
+
+gridExtra::grid.arrange(p_feedback, p_no_feedback, ncol = 2)
+```
+
+![](img/gf_sd_ruler_histogram_compare.png)
+
+*What to look for:* Both distributions are centered near 13 seconds, but the red SD segments have very different lengths — the no-feedback group has a much wider spread. Fixing the x-axis with `gf_lims()` makes the comparison honest.
 
 ---
 

@@ -32,4 +32,4 @@ These functions are not yet in the coursekata-r package. Use `source()` to load 
 | `gf_coef()`, `gf_b()` | `gf_coef.R` | Overlays b0, b1, b2 … annotations on a plot. |
 | `gf_shuffle_grid()` | `gf_shuffle_grid.R` | "Spot the real data" randomization grid. |
 | `gf_reduce()`, `gf_square_reduce()`, `gf_squareduce()` | `gf_reduce.R` | Not yet submitted. |
-| `add_sd_ruler()` | `add_sd_ruler.R` | — |
+| `gf_sd_ruler()` (extended) | `gf_sd_ruler.R` | Extends coursekata-r version with histogram support (auto-detects axis orientation). PR candidate. Supersedes `add_sd_ruler.R`. |

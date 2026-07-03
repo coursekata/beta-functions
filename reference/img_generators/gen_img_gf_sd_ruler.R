@@ -7,12 +7,16 @@ library(gridExtra)
 library(here)
 
 here::i_am("reference/img_generators/gen_img_gf_sd_ruler.R")
-img_dir <- here("reference", "img")
+img_dir  <- here("reference", "img")
+repo_dir <- here()
 
 save_plot <- function(p, filename, width = 4.5, height = 3) {
   ggsave(file.path(img_dir, filename), plot = p, width = width, height = height, dpi = 150)
   cat("saved:", filename, "\n")
 }
+
+# Extended prototype: overrides coursekata-r version to add histogram support
+source(file.path(repo_dir, "gf_sd_ruler.R"))
 
 # Shared data used in notebook Ch 6.4-6.6
 set.seed(141)
@@ -66,5 +70,29 @@ p4 <- gf_point(Thumb ~ Height, data = Fingers, alpha = 0.4) %>%
   gf_sd_ruler(where = "mean") +
   labs(title = "Continuous x: ruler at mean of Height")
 save_plot(p4, "gf_sd_ruler_x_placement.png")
+
+# ── 5. Histogram: single distribution ─────────────────────────────────────────
+p5 <- gf_histogram(~ Thumb, data = Fingers, binwidth = 3) %>%
+  gf_model(lm(Thumb ~ NULL, data = Fingers)) %>%
+  gf_sd_ruler(color = "red", size = 2) +
+  labs(title = "Histogram: SD as horizontal segment from mean")
+save_plot(p5, "gf_sd_ruler_histogram.png")
+
+# ── 6. Histogram: side-by-side comparison ─────────────────────────────────────
+p_h_feedback <- gf_histogram(~ median_time, data = feedback_data, binwidth = 1) %>%
+  gf_lims(x = c(0, 30)) %>%
+  gf_labs(title = "feedback (SD ≈ 3 sec)") %>%
+  gf_model(feedback_empty) %>%
+  gf_sd_ruler(color = "red", size = 2)
+
+p_h_no_feedback <- gf_histogram(~ median_time, data = no_feedback_data, binwidth = 1) %>%
+  gf_lims(x = c(0, 30)) %>%
+  gf_labs(title = "no_feedback (SD ≈ 6 sec)") %>%
+  gf_model(no_feedback_empty) %>%
+  gf_sd_ruler(color = "red", size = 2)
+
+p6 <- gridExtra::arrangeGrob(p_h_feedback, p_h_no_feedback, ncol = 2)
+ggsave(file.path(img_dir, "gf_sd_ruler_histogram_compare.png"), plot = p6, width = 9, height = 3, dpi = 150)
+cat("saved: gf_sd_ruler_histogram_compare.png\n")
 
 cat("\nAll images saved to", img_dir, "\n")

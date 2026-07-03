@@ -6,7 +6,12 @@
 
 ## What it does
 
-`gf_sd_ruler()` adds a vertical segment to a scatter or jitter plot showing one standard deviation of the y-variable, anchored at the mean. The segment runs from the mean up to mean + SD, placed at a chosen x position.
+`gf_sd_ruler()` adds a segment representing one standard deviation, anchored at the mean. The orientation depends on where the outcome variable lives:
+
+- **Scatter or jitter plot** (outcome on y-axis) → **vertical** segment, running from the mean up to mean + SD, placed at a chosen x position.
+- **Histogram** (outcome on x-axis) → **horizontal** segment, running from the mean to mean + SD along the baseline.
+
+The function auto-detects which case applies from the plot's axis mappings, so the same call works for both plot types.
 
 The core teaching use: students can *see* that SD is just a residual of typical size — the segment looks exactly like a residual drawn from the empty model prediction. This makes the abstract formula $s = \sqrt{\frac{\sum(Y_i - \bar{Y})^2}{n-1}}$ concrete.
 

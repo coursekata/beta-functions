@@ -106,7 +106,21 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
   x_range    <- range(x_vals, na.rm = TRUE)
   x_span     <- diff(x_range)
 
-  # ── 5. Draw markers ──────────────────────────────────────────────────────────
+  # ── 5. Warn if labels would overlap existing text annotations ────────────────
+  if (labels) {
+    has_text_annotations <- any(sapply(p$layers, function(l) {
+      inherits(l$geom, "GeomText") && !isTRUE(l$inherit.aes)
+    }))
+    if (has_text_annotations) {
+      warning(
+        "gf_cutoffs: labels = TRUE on multiple stacked calls will overlap. ",
+        "Use labels = TRUE on only one gf_cutoffs() call at a time.",
+        call. = FALSE
+      )
+    }
+  }
+
+  # ── 6. Draw markers ──────────────────────────────────────────────────────────
   for (i in seq_len(nrow(cutoffs))) {
     x0        <- cutoffs$x[i]
     tail_prop <- cutoffs$tail_prop[i]

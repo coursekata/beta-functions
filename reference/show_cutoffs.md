@@ -21,7 +21,7 @@ gf_histogram(~ b1, data = sdob1, fill = ~ middle(b1, .95)) %>%
 
 ## The distribution-part functions
 
-Before using `show_cutoffs()`, you need to understand the fill functions it works with. Each one colors histogram bins based on where they fall relative to a cutoff:
+Before using `show_cutoffs()`, you need to understand the fill functions it works with. Each one colors histogram bins based on where they fall relative to a cutoff. See [`distribution_parts.md`](distribution_parts.md) for full documentation of all five functions.
 
 | Function | Colors… | Typical use |
 |---|---|---|

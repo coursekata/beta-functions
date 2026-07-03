@@ -45,7 +45,7 @@ These started here and have since moved into the [coursekata-r](https://github.c
 | `gf_square_resid_fun()` | [`R/gf_square_resid_fun.R`](https://github.com/coursekata/coursekata-r/blob/main/R/gf_square_resid_fun.R) | — |
 | `gf_sd_ruler()` (base) | [`R/gf_sd_ruler.R`](https://github.com/coursekata/coursekata-r/blob/main/R/gf_sd_ruler.R) | [`reference/gf_sd_ruler.md`](reference/gf_sd_ruler.md) |
 | `show_cutoffs()` | [`R/show_cutoffs.R`](https://github.com/coursekata/coursekata-r/blob/main/R/show_cutoffs.R) | [`reference/show_cutoffs.md`](reference/show_cutoffs.md) |
-| `outer()` | [`R/distribution_parts.R`](https://github.com/coursekata/coursekata-r/blob/main/R/distribution_parts.R) | — |
+| `middle()`, `tails()`, `upper()`, `lower()`, `outer()` | [`R/distribution_parts.R`](https://github.com/coursekata/coursekata-r/blob/main/R/distribution_parts.R) | [`reference/distribution_parts.md`](reference/distribution_parts.md) |
 
 See [GRADUATED.md](GRADUATED.md) for the full graduation history.
 

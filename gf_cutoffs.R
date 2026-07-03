@@ -20,6 +20,14 @@
 #   gf_histogram(~ b1, data = sdob1) %>%
 #     gf_cutoffs(middle(b1, .95), color = "blue") %>%
 #     gf_cutoffs(middle(b1, .99), color = "red")
+#
+# Label logic: each cutoff marker labels the SMALLER region on its side.
+# This means labels always describe the tail (the extreme/unusual region),
+# regardless of which distribution-part function was used:
+#   middle(.95)  → ".025 of values below" / ".025 of values above"
+#   upper(.05)   → ".05 of values above"
+#   lower(.05)   → ".05 of values below"
+#   tails(.05)   → ".025 of values below" / ".025 of values above"
 
 
 #' Add cutoff markers to a histogram
@@ -35,14 +43,16 @@
 #' @param p A ggplot histogram (from \code{gf_histogram()}).
 #' @param expr A bare distribution-part call, e.g. \code{middle(b1, .95)}.
 #'   If omitted, the fill aesthetic is inspected for a distribution-part function.
-#' @param color Color for markers, lines, and labels. Default \code{"#1e3a8a"}.
+#' @param color Color for markers, lines, and labels. Default \code{"#555555"}
+#'   (dark charcoal — unobtrusive against the histogram fill).
 #' @param size Size of the downward-pointing triangle markers. Default \code{4}.
 #' @param labels If \code{TRUE}, adds text annotations showing the tail proportion
-#'   at each cutoff. Default \code{FALSE}.
+#'   at each cutoff. The label always describes the smaller (tail) region on that
+#'   side of the cutoff. Default \code{FALSE}.
 #' @param ... Currently unused.
 #' @return A ggplot object with cutoff markers added.
 #' @export
-gf_cutoffs <- function(p, expr = NULL, color = "#1e3a8a", size = 4,
+gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
                        labels = FALSE, ...) {
   expr_quo <- rlang::enquo(expr)
 
@@ -148,7 +158,7 @@ gf_cutoffs <- function(p, expr = NULL, color = "#1e3a8a", size = 4,
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-# Extract a distribution-part quosure from the plot's fill aesthetic
+# Extract a distribution-part quosure from the plot's fill aesthetic.
 .extract_dist_fill <- function(p) {
   valid <- c("middle", "tails", "upper", "lower", "outer")
 
@@ -158,19 +168,24 @@ gf_cutoffs <- function(p, expr = NULL, color = "#1e3a8a", size = 4,
     is.call(expr) && as.character(expr[[1]]) %in% valid
   }
 
-  if (is_dist_call(p$mapping$fill)) return(p$mapping$fill)
-  if (length(p$layers) > 0 && is_dist_call(p$layers[[1]]$mapping$fill)) {
-    return(p$layers[[1]]$mapping$fill)
-  }
+  if (is_dist_call(p$mapping$fill))                       return(p$mapping$fill)
+  if (length(p$layers) > 0 &&
+      is_dist_call(p$layers[[1]]$mapping$fill))           return(p$layers[[1]]$mapping$fill)
   NULL
 }
 
-# Find cutoff x-positions and tail proportions from a sorted logical vector.
-# Returns a data frame with columns: x, tail_prop, side ("lower" or "upper").
+# Find cutoff x-positions and label metadata from a logical vector.
 #
-# A "lower" cutoff is a FALSE→TRUE transition in sorted order (the FALSE values
-# are to the left). An "upper" cutoff is a TRUE→FALSE transition (FALSE values
-# are to the right). Marker is placed at the boundary data value.
+# Returns a data frame: x (cutoff position), tail_prop (proportion in the
+# smaller/tail region on that side), side ("lower" or "upper").
+#
+# Label logic: at each TRUE/FALSE transition, label the SMALLER of the two
+# sides. This ensures the label always describes the tail region, regardless
+# of which distribution-part function was used:
+#   middle(.95) F→T at i=25:  left=.025, right=.975 → "lower", .025
+#   upper(.05)  F→T at i=950: left=.95,  right=.05  → "upper", .05
+#   lower(.05)  T→F at i=50:  left=.05,  right=.95  → "lower", .05
+#   tails(.05)  T→F at i=25:  left=.025, right=.975 → "lower", .025
 .find_cutoffs <- function(x_vals, logical_vec) {
   keep      <- !is.na(x_vals) & !is.na(logical_vec)
   x_clean   <- x_vals[keep]
@@ -184,13 +199,18 @@ gf_cutoffs <- function(p, expr = NULL, color = "#1e3a8a", size = 4,
   diffs <- diff(as.integer(l_sorted))
 
   rows <- lapply(which(diffs != 0), function(i) {
-    if (diffs[i] == 1L) {
-      # F→T: lower cutoff; place marker at first TRUE (i+1)
-      data.frame(x = x_sorted[i + 1], tail_prop = i / n, side = "lower",
+    left_prop  <- i / n
+    right_prop <- (n - i) / n
+
+    # Place marker at the boundary value on the TRUE side of the transition
+    x0 <- if (diffs[i] == 1L) x_sorted[i + 1L] else x_sorted[i]
+
+    # Label the smaller (tail) side
+    if (left_prop <= right_prop) {
+      data.frame(x = x0, tail_prop = left_prop,  side = "lower",
                  stringsAsFactors = FALSE)
     } else {
-      # T→F: upper cutoff; place marker at last TRUE (i)
-      data.frame(x = x_sorted[i], tail_prop = (n - i) / n, side = "upper",
+      data.frame(x = x0, tail_prop = right_prop, side = "upper",
                  stringsAsFactors = FALSE)
     }
   })
@@ -202,10 +222,11 @@ gf_cutoffs <- function(p, expr = NULL, color = "#1e3a8a", size = 4,
   do.call(rbind, rows)
 }
 
-# Format a tail proportion for display, snapping common values to clean strings
+# Format a tail proportion for display, snapping common alpha levels to
+# clean strings (e.g. 0.025000001 → ".025").
 .format_prop <- function(p) {
-  snaps <- c(0.005, 0.01, 0.025, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
+  snaps  <- c(0.005, 0.01, 0.025, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
   labels <- c(".005", ".01", ".025", ".05", ".10", ".15", ".20", ".25", ".30")
   idx <- which(abs(snaps - p) < 1e-9)
-  if (length(idx)) labels[[idx]] else format(round(p, 3), nsmall = 3)
+  if (length(idx)) labels[[idx[1]]] else format(round(p, 3), nsmall = 3)
 }

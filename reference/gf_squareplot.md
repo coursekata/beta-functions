@@ -53,7 +53,7 @@ gf_squareplot(~ Thumb, data = Fingers, bars = "outline", binwidth = 3)
 ### Sampling distribution with DGP overlay (small n)
 
 ```r
-sdob1 <- do(10) * b1(shuffle(time) ~ bucket, data = df)
+sdob1 <- do(10) * b1(shuffle(Tip) ~ Condition, data = TipExperiment)
 
 gf_squareplot(~ b1, data = sdob1,
   show_dgp  = TRUE,
@@ -72,7 +72,7 @@ gf_squareplot(~ b1, data = sdob1,
 ### Sampling distribution with DGP overlay (larger n)
 
 ```r
-sdob1 <- do(100) * b1(shuffle(time) ~ bucket, data = df)
+sdob1 <- do(100) * b1(shuffle(Tip) ~ Condition, data = TipExperiment)
 
 gf_squareplot(~ b1, data = sdob1,
   show_dgp  = TRUE,

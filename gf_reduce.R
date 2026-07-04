@@ -28,6 +28,22 @@
 #     gf_square_reduce(complex_model)
 
 
+# ── .freeze_jitter ────────────────────────────────────────────────────────────
+# Embedded copy — canonical version and full rationale in freeze_plot.R.
+# Pins every unseeded PositionJitter layer to a fixed seed (in place; ggproto
+# objects are environments), so all builds of the plot draw the same jitter.
+# No-op for already-seeded layers and non-jitter plots; never calls set.seed().
+.freeze_jitter <- function(plot) {
+  for (l in plot$layers) {
+    pos <- l$position
+    if (inherits(pos, "PositionJitter") && !isTRUE(is.finite(pos$seed))) {
+      pos$seed <- sample.int(.Machine$integer.max, 1L)
+    }
+  }
+  plot
+}
+
+
 #' Add SS Model lines to a plot
 #'
 #' Draws a vertical line for each observation from the empty model prediction
@@ -41,8 +57,8 @@
 #' @return A ggplot object with SS Model lines added.
 #' @export
 gf_reduce <- function(plot, model, linewidth = 0.2, ...) {
-  rand_int <- sample(1:100, 1)
-  set.seed(rand_int)
+  # Pin the jitter so every build of this plot draws the same dot positions
+  plot <- .freeze_jitter(plot)
 
   y_fitted  <- stats::fitted(model)
   y_empty   <- mean(y_fitted)   # grand mean = empty model prediction for every point
@@ -50,7 +66,6 @@ gf_reduce <- function(plot, model, linewidth = 0.2, ...) {
   plot_data <- ggplot2::ggplot_build(plot)$data[[1]]
   x_loc     <- plot_data$x
 
-  set.seed(rand_int)
   plot +
     ggplot2::geom_segment(
       ggplot2::aes(
@@ -82,8 +97,8 @@ gf_reduce <- function(plot, model, linewidth = 0.2, ...) {
 #' @return A ggplot object with SS Model squares added.
 #' @export
 gf_square_reduce <- function(plot, model, aspect = 4 / 6, alpha = 0.1, linewidth = 0.25, ...) {
-  rand_int <- sample(1:100, 1)
-  set.seed(rand_int)
+  # Pin the jitter so every build of this plot draws the same dot positions
+  plot <- .freeze_jitter(plot)
 
   y_fitted  <- stats::fitted(model)
   y_empty   <- mean(y_fitted)
@@ -110,7 +125,6 @@ gf_square_reduce <- function(plot, model, aspect = 4 / 6, alpha = 0.1, linewidth
     )
   }))
 
-  set.seed(rand_int)
   plot +
     ggplot2::geom_polygon(
       data        = squares_data,

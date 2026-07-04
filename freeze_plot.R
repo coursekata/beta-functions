@@ -1,10 +1,12 @@
 # freeze_plot.R
 #
-# Shared helper for gf_lm.R, gf_lm_cat.R, and gf_coef.R.
+# Shared helpers:
+#   .freeze_plot_xy — gf_lm.R, gf_lm_cat.R, gf_coef.R
+#   .freeze_jitter  — gf_resid_gf_squaresid.R, gf_reduce.R
 #
 # When these functions are packaged into coursekata-r, replace the embedded
-# copy of .freeze_plot_xy in each file with a single source() of this file
-# (or an internal package function).
+# copy in each file with a single source() of this file (or an internal
+# package function).
 #
 # Until then each file is self-contained and carries its own copy so a single
 # source() call is all a user needs.
@@ -69,4 +71,39 @@
   if (!is.null(orig_x_label)) p$labels$x <- orig_x_label
 
   p
+}
+
+# Pin every unseeded jitter layer to a fixed seed so all builds of the plot
+# draw identical dot positions.
+#
+# Why this is needed:
+#   position_jitter() defaults to seed = NA, which re-rolls the jitter on
+#   every ggplot_build(). Functions that anchor overlays to the jittered
+#   positions (gf_resid, gf_square_resid, gf_reduce, gf_square_reduce) used
+#   to bracket their build with sample()/set.seed() so the *next* render
+#   would redraw the same jitter — but that bracket breaks under lazy pipe
+#   evaluation, is last-writer-wins when several such functions are chained,
+#   and only survives a single render. Failing chains and diagnosis:
+#   tests/test_resid_square_alignment.ipynb
+#
+# What it does:
+#   - Assigns a random fixed seed to each PositionJitter layer that has none.
+#     ggproto objects are environments, so the assignment sticks to the layer
+#     itself and every subsequent build reproduces the same jitter — whichever
+#     function builds it, however many times.
+#   - No-op for layers that already have a seed (user-set or frozen by an
+#     earlier call in the chain) and for non-jitter plots (e.g. gf_point).
+#   - Never calls set.seed(), so the user's RNG stream is not reset.
+#
+# Note: the seed is assigned in place, so a base plot saved in a variable is
+# frozen too — everything later built from it stays mutually consistent.
+
+.freeze_jitter <- function(plot) {
+  for (l in plot$layers) {
+    pos <- l$position
+    if (inherits(pos, "PositionJitter") && !isTRUE(is.finite(pos$seed))) {
+      pos$seed <- sample.int(.Machine$integer.max, 1L)
+    }
+  }
+  plot
 }

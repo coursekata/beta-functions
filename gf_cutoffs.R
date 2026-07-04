@@ -1,6 +1,6 @@
 # deps: ggplot2, rlang
 #
-# gf_cutoffs() — add cutoff markers to a histogram
+# gf_cutoffs() -- add cutoff markers to a histogram
 #
 # A cleaner, more explicit alternative to show_cutoffs(). Works with any
 # distribution-part function (middle, tails, upper, lower, outer) passed
@@ -8,11 +8,11 @@
 #
 # Two usage modes:
 #
-#   # 1. Explicit — no fill needed; expression drives the cutoffs
+#   # 1. Explicit -- no fill needed; expression drives the cutoffs
 #   gf_histogram(~ b1, data = sdob1) %>%
 #     gf_cutoffs(middle(b1, .95))
 #
-#   # 2. Auto-detect — reads the fill aesthetic if no expression is given
+#   # 2. Auto-detect -- reads the fill aesthetic if no expression is given
 #   gf_histogram(~ b1, data = sdob1, fill = ~ middle(b1, .95)) %>%
 #     gf_cutoffs()
 #
@@ -44,7 +44,7 @@
 #' @param expr A bare distribution-part call, e.g. \code{middle(b1, .95)}.
 #'   If omitted, the fill aesthetic is inspected for a distribution-part function.
 #' @param color Color for markers, lines, and labels. Default \code{"#555555"}
-#'   (dark charcoal — unobtrusive against the histogram fill).
+#'   (dark charcoal -- unobtrusive against the histogram fill).
 #' @param size Size of the downward-pointing triangle markers. Default \code{4}.
 #' @param labels If \code{TRUE}, adds text annotations showing the tail proportion
 #'   at each cutoff. The label always describes the smaller (tail) region on that
@@ -58,30 +58,42 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
 
   # ── 1. Get x values from histogram ──────────────────────────────────────────
   if (is.null(p$mapping$x)) {
-    stop("gf_cutoffs: plot must have an x aesthetic — use with gf_histogram()")
+    stop("gf_cutoffs: plot must have an x aesthetic -- use with gf_histogram()")
   }
-  x_name <- rlang::as_name(p$mapping$x)
-  if (!x_name %in% names(p$data)) {
-    stop(paste0(
-      "gf_cutoffs: variable '", x_name, "' not found in plot data.\n",
-      "Make sure the variable name in your expression matches the histogram x variable."
-    ))
+  if (!is.null(p$mapping$y)) {
+    stop(
+      "gf_cutoffs: plot has a y aesthetic -- gf_cutoffs() only works with ",
+      "gf_histogram(), not scatter plots or other two-variable plots."
+    )
   }
-  x_vals <- p$data[[x_name]]
+  x_name   <- tryCatch(rlang::as_name(p$mapping$x), error = function(e) NULL)
+  # Use p$data as a data mask when it's a real data frame; otherwise fall back
+  # to the quosure's captured environment (handles bare variables with no data=).
+  data_mask <- if (is.data.frame(p$data)) p$data else NULL
+  x_vals <- tryCatch(
+    rlang::eval_tidy(p$mapping$x, data = data_mask),
+    error = function(e) stop(
+      "gf_cutoffs: could not evaluate x variable",
+      if (!is.null(x_name)) paste0(" '", x_name, "'") else "",
+      ".", call. = FALSE
+    )
+  )
 
   # ── 2. Get logical vector from expression or fill ────────────────────────────
   if (!rlang::quo_is_null(expr_quo)) {
-    logical_vec <- rlang::eval_tidy(expr_quo, data = p$data)
+    logical_vec <- rlang::eval_tidy(expr_quo, data = data_mask)
   } else {
     fill_quo <- .extract_dist_fill(p)
     if (is.null(fill_quo)) {
       stop(paste0(
         "gf_cutoffs: no expression given and no distribution-part fill found.\n",
-        "Either pass an expression: gf_cutoffs(middle(", x_name, ", .95))\n",
-        "Or set fill = ~middle(", x_name, ", .95) in gf_histogram()."
+        "Either pass an expression: gf_cutoffs(middle(",
+        if (!is.null(x_name)) x_name else "x", ", .95))\n",
+        "Or set fill = ~middle(",
+        if (!is.null(x_name)) x_name else "x", ", .95) in gf_histogram()."
       ))
     }
-    logical_vec <- rlang::eval_tidy(fill_quo, data = p$data)
+    logical_vec <- rlang::eval_tidy(fill_quo, data = data_mask)
   }
 
   if (!is.logical(logical_vec)) {
@@ -92,7 +104,9 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
   cutoffs <- .find_cutoffs(x_vals, logical_vec)
 
   if (nrow(cutoffs) == 0) {
-    stop("gf_cutoffs: no cutoff positions found.")
+    warning("gf_cutoffs: no cutoff positions found -- returning plot unchanged.",
+            call. = FALSE)
+    return(p)
   }
 
   # ── 4. Compute y positions from built plot ───────────────────────────────────
@@ -166,7 +180,11 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
     }
   }
 
-  p + ggplot2::coord_cartesian(clip = "off")
+  if (inherits(p$coordinates, "CoordCartesian") && p$coordinates$clip == "off") {
+    p
+  } else {
+    p + ggplot2::coord_cartesian(clip = "off")
+  }
 }
 
 
@@ -188,56 +206,74 @@ gf_cutoffs <- function(p, expr = NULL, color = "#555555", size = 4,
   NULL
 }
 
-# Find cutoff x-positions and label metadata from a logical vector.
+# Find cutoff x-positions using the same rank-based logic as distribution_parts.
 #
-# Returns a data frame: x (cutoff position), tail_prop (proportion in the
-# smaller/tail region on that side), side ("lower" or "upper").
+# lower() sorts ascending and takes the first k obs → lower boundary = x at
+# rank k in ascending sort. upper() sorts DESCENDING and takes the first k obs
+# → upper boundary = x at rank k in descending sort (= minimum x among the
+# upper tail). We mirror each sort exactly so ties are broken identically.
 #
-# Label logic: at each TRUE/FALSE transition, label the SMALLER of the two
-# sides. This ensures the label always describes the tail region, regardless
-# of which distribution-part function was used:
-#   middle(.95) F→T at i=25:  left=.025, right=.975 → "lower", .025
-#   upper(.05)  F→T at i=950: left=.95,  right=.05  → "upper", .05
-#   lower(.05)  T→F at i=50:  left=.05,  right=.95  → "lower", .05
-#   tails(.05)  T→F at i=25:  left=.025, right=.975 → "lower", .025
+# Which region is the tail? FALSE is the minority for middle/upper/lower; TRUE
+# is the minority for tails/outer. Tie-breaking for 50/50 cases matches the
+# single-boundary (upper/lower .5) and two-boundary (outer .5) patterns.
 .find_cutoffs <- function(x_vals, logical_vec) {
   keep      <- !is.na(x_vals) & !is.na(logical_vec)
   x_clean   <- x_vals[keep]
   log_clean <- logical_vec[keep]
   n         <- length(x_clean)
 
-  ord      <- order(x_clean)
-  x_sorted <- x_clean[ord]
-  l_sorted <- log_clean[ord]
+  # Ascending sort (mirrors lower())
+  ord_asc  <- order(x_clean)
+  x_asc    <- x_clean[ord_asc]
+  l_asc    <- log_clean[ord_asc]
 
-  diffs <- diff(as.integer(l_sorted))
+  false_total <- sum(!l_asc)
+  true_total  <- n - false_total
+  n_trans     <- sum(diff(as.integer(l_asc)) != 0)
 
-  rows <- lapply(which(diffs != 0), function(i) {
-    left_prop  <- i / n
-    right_prop <- (n - i) / n
+  tail_is_false <- if (false_total != true_total) {
+    false_total < true_total
+  } else if (n_trans <= 1L) {
+    FALSE          # upper(.5) / lower(.5): label the TRUE region
+  } else {
+    !l_asc[1L]     # two-boundary equal: outer pattern → first value is tail
+  }
 
-    # Place marker at the boundary value on the TRUE side of the transition
-    x0 <- if (diffs[i] == 1L) x_sorted[i + 1L] else x_sorted[i]
+  is_tail_asc <- if (tail_is_false) !l_asc else l_asc
 
-    # Label the smaller (tail) side.
-    # Tie (e.g. upper(.5) or lower(.5)): use the transition direction —
-    # F→T means TRUE is to the right ("upper"); T→F means TRUE is to the left ("lower").
-    if (left_prop < right_prop) {
-      data.frame(x = x0, tail_prop = left_prop,  side = "lower",
-                 stringsAsFactors = FALSE)
-    } else if (right_prop < left_prop) {
-      data.frame(x = x0, tail_prop = right_prop, side = "upper",
-                 stringsAsFactors = FALSE)
-    } else {
-      if (diffs[i] == 1L) {
-        data.frame(x = x0, tail_prop = right_prop, side = "upper",
-                   stringsAsFactors = FALSE)
-      } else {
-        data.frame(x = x0, tail_prop = left_prop,  side = "lower",
-                   stringsAsFactors = FALSE)
-      }
-    }
-  })
+  # Lower boundary: consecutive tail at the START of ascending sort
+  k_lower <- if (is_tail_asc[1L]) rle(is_tail_asc)$lengths[1L] else 0L
+
+  # Descending sort (mirrors upper())
+  ord_desc    <- order(x_clean, decreasing = TRUE)
+  l_desc      <- log_clean[ord_desc]
+  x_desc      <- x_clean[ord_desc]
+  is_tail_desc <- if (tail_is_false) !l_desc else l_desc
+
+  # Upper boundary: consecutive tail at the START of descending sort
+  k_upper <- if (is_tail_desc[1L]) rle(is_tail_desc)$lengths[1L] else 0L
+
+  rows <- list()
+
+  if (k_lower > 0L) {
+    rows <- c(rows, list(data.frame(
+      x         = x_asc[k_lower],
+      tail_prop = k_lower / n,
+      side      = "lower",
+      stringsAsFactors = FALSE
+    )))
+  }
+
+  if (k_upper > 0L) {
+    # x_desc[k_upper] is the minimum x in the upper tail
+    # (x_desc is descending, so rank k_upper is the smallest value in the tail)
+    rows <- c(rows, list(data.frame(
+      x         = x_desc[k_upper],
+      tail_prop = k_upper / n,
+      side      = "upper",
+      stringsAsFactors = FALSE
+    )))
+  }
 
   if (length(rows) == 0) {
     return(data.frame(x = numeric(0), tail_prop = numeric(0),

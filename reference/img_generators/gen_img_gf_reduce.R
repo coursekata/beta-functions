@@ -54,7 +54,7 @@ tip_small <- TipExperiment[sample(nrow(TipExperiment), 20), ]
 m_cat_empty   <- lm(Tip ~ NULL,      data = tip_small)
 m_cat_complex <- lm(Tip ~ Condition, data = tip_small)
 
-p4 <- gf_jitter(Tip ~ Condition, data = tip_small, width = 0.1, alpha = 0.5) %>%
+p4 <- gf_point(Tip ~ Condition, data = tip_small, alpha = 0.5) %>%
   gf_model(m_cat_empty) %>%
   gf_model(m_cat_complex) %>%
   gf_square_resid(m_cat_empty,    fill = "blue",  color = "blue",  alpha = 0.1) %>%

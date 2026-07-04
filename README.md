@@ -23,12 +23,12 @@ These are available now via `source()`. Each has a reference page with examples,
 | Function(s) | Source file | Reference page |
 |---|---|---|
 | `gf_lm()` | [`gf_lm.R`](gf_lm.R) | [`reference/gf_lm.md`](reference/gf_lm.md) |
-| `gf_lm_cat()` | [`gf_lm_cat.R`](gf_lm_cat.R) | — |
+| `gf_lm_cat()` | [`gf_lm_cat.R`](gf_lm_cat.R) | [`reference/gf_lm_cat.md`](reference/gf_lm_cat.md) |
 | `gf_coef()`, `gf_b()` | [`gf_coef.R`](gf_coef.R) | [`reference/gf_coef.md`](reference/gf_coef.md) |
 | `gf_shuffle_grid()` | [`gf_shuffle_grid.R`](gf_shuffle_grid.R) | [`reference/gf_shuffle_grid.md`](reference/gf_shuffle_grid.md) |
 | `gf_reduce()`, `gf_square_reduce()`, `gf_squareduce()` | [`gf_reduce.R`](gf_reduce.R) | [`reference/gf_reduce.md`](reference/gf_reduce.md) |
 | `gf_sd_ruler()` (extended) | [`gf_sd_ruler.R`](gf_sd_ruler.R) | [`reference/gf_sd_ruler.md`](reference/gf_sd_ruler.md) |
-| `gf_cutoffs()` | [`gf_cutoffs.R`](gf_cutoffs.R) | — |
+| `gf_cutoffs()` | [`gf_cutoffs.R`](gf_cutoffs.R) | [`reference/gf_cutoffs.md`](reference/gf_cutoffs.md) |
 
 > **`gf_sd_ruler()` note:** the base version is already in `library(coursekata)`. Source `gf_sd_ruler.R` here to get the extended version with histogram support.
 

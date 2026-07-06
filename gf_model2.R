@@ -24,11 +24,11 @@ library(rlang)
 #' @return a gg object (a plot layer) that can be added to a plot.
 #'
 #' @export
-gf_model <- function(object, model, ...) {
+gf_model2 <- function(object, model, ...) {
   args <- rlang::list2(...)
 
   if (!inherits(object, c("gg", "ggplot"))) {
-    abort("`gf_model()` needs to be layered on top of a plot.")
+    abort("`gf_model2()` needs to be layered on top of a plot.")
   }
 
   info <- list(layer = list())

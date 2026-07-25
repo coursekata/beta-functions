@@ -2,7 +2,7 @@
 #
 # Shared helpers:
 #   .freeze_plot_xy — gf_lm.R, gf_lm_cat.R, gf_coef.R
-#   .freeze_jitter  — gf_resid_gf_squaresid.R, gf_reduce.R
+#   .freeze_jitter  — gf_reduce.R
 #
 # When these functions are packaged into coursekata-r, replace the embedded
 # copy in each file with a single source() of this file (or an internal

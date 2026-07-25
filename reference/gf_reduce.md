@@ -151,7 +151,7 @@ gf_point(Tip ~ Condition, data = tip_small, alpha = 0.5) %>%
 - **Small datasets only.** With large n, squares overlap heavily. Sample down to 8–15 points for classroom use.
 - **Mapped fill aesthetics (e.g., `fill = ~Sex`) are not supported.** The squares are drawn from an internal data frame that doesn't carry the original variables. Use fixed colors (e.g., `fill = "green"`) instead.
 - **The empty model is always the grand mean.** There is no argument for a custom empty model — `gf_square_reduce()` always compares the complex model to `lm(y ~ NULL)`.
-- **Use `gf_point()`, not `gf_jitter()`, when stacking these with other resid/square functions.** When a chain contains two or more of `gf_resid()`, `gf_square_resid()`, `gf_reduce()`, `gf_square_reduce()`, the overlays no longer line up with jittered dots (see [`tests/test_resid_square_alignment.ipynb`](../tests/test_resid_square_alignment.ipynb)). With `gf_point()` the anchor positions are deterministic, so any combination works.
+- **Jitter alignment is handled automatically.** `gf_reduce()` and `gf_square_reduce()` pin the plot's jitter to a fixed seed internally, so their overlays line up with the jittered dots and stay aligned when you chain two or more of `gf_resid()`, `gf_square_resid()`, `gf_reduce()`, `gf_square_reduce()` — in any combination or order. (Earlier versions re-rolled the jitter on every build, which misaligned the overlays and forced a `gf_point()`-only workaround; that is no longer needed. The original diagnosis is in [`tests/test_resid_square_alignment.ipynb`](../tests/test_resid_square_alignment.ipynb).)
 
 ---
 

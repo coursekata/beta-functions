@@ -87,22 +87,29 @@
 #   tests/test_resid_square_alignment.ipynb
 #
 # What it does:
-#   - Assigns a random fixed seed to each PositionJitter layer that has none.
-#     ggproto objects are environments, so the assignment sticks to the layer
-#     itself and every subsequent build reproduces the same jitter — whichever
-#     function builds it, however many times.
+#   - Gives each unseeded PositionJitter layer a seeded *copy* of its position.
+#     ggproto objects are environments, so the seed sticks to the layer and
+#     every subsequent build reproduces the same jitter — whichever function
+#     builds it, however many times.
 #   - No-op for layers that already have a seed (user-set or frozen by an
 #     earlier call in the chain) and for non-jitter plots (e.g. gf_point).
 #   - Never calls set.seed(), so the user's RNG stream is not reset.
 #
-# Note: the seed is assigned in place, so a base plot saved in a variable is
-# frozen too — everything later built from it stays mutually consistent.
+# Why copy rather than seed in place: geom_jitter() and position = "jitter"
+# share ggplot2's namespace-level PositionJitter object, so writing pos$seed
+# directly would leak the seed into unrelated jitter plots. Replacing the
+# layer's position with a fresh seeded copy still freezes the caller's own plot
+# — the layer is updated by reference, so a base plot saved in a variable stays
+# consistent with everything built from it — without touching the shared object.
 
 .freeze_jitter <- function(plot) {
-  for (l in plot$layers) {
-    pos <- l$position
+  for (i in seq_along(plot$layers)) {
+    pos <- plot$layers[[i]]$position
     if (inherits(pos, "PositionJitter") && !isTRUE(is.finite(pos$seed))) {
-      pos$seed <- sample.int(.Machine$integer.max, 1L)
+      plot$layers[[i]]$position <- ggplot2::ggproto(
+        NULL, pos,
+        seed = sample.int(.Machine$integer.max, 1L)
+      )
     }
   }
   plot

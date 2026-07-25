@@ -30,14 +30,21 @@
 
 # ── .freeze_jitter ────────────────────────────────────────────────────────────
 # Embedded copy — canonical version and full rationale in freeze_plot.R.
-# Pins every unseeded PositionJitter layer to a fixed seed (in place; ggproto
-# objects are environments), so all builds of the plot draw the same jitter.
-# No-op for already-seeded layers and non-jitter plots; never calls set.seed().
+# Gives each unseeded PositionJitter layer a seeded *copy* of its position, so
+# every build of the plot draws the same jitter. Copies rather than seeding in
+# place because geom_jitter()/position = "jitter" share ggplot2's namespace-level
+# PositionJitter object; replacing the layer's position still freezes the
+# caller's own plot (the layer is updated by reference) without touching that
+# shared object. No-op for already-seeded layers and non-jitter plots; never
+# calls set.seed().
 .freeze_jitter <- function(plot) {
-  for (l in plot$layers) {
-    pos <- l$position
+  for (i in seq_along(plot$layers)) {
+    pos <- plot$layers[[i]]$position
     if (inherits(pos, "PositionJitter") && !isTRUE(is.finite(pos$seed))) {
-      pos$seed <- sample.int(.Machine$integer.max, 1L)
+      plot$layers[[i]]$position <- ggplot2::ggproto(
+        NULL, pos,
+        seed = sample.int(.Machine$integer.max, 1L)
+      )
     }
   }
   plot

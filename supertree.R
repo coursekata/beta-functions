@@ -156,7 +156,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
   }
   
   
-  fmt_sse <- function(x) {
+  fmt_error <- function(x) {
     formatC(x, format = "f", digits = digits)
   }
   
@@ -190,15 +190,13 @@ supertree <- function(model, depth = Inf, digits = 2) {
   rows <- list()
   
   
-  add_row <- function(left,
-                      prediction = NA_real_,
-                      sse = NA_real_,
+  add_row <- function(text,
+                      node = NA_real_,
                       terminal = FALSE) {
     
     rows[[length(rows) + 1]] <<- list(
-      left = left,
-      prediction = prediction,
-      sse = sse,
+      text = text,
+      node = node,
       terminal = terminal
     )
   }
@@ -235,25 +233,31 @@ supertree <- function(model, depth = Inf, digits = 2) {
         branch,
         if (branch == "NO") " " else "",
         " (n = ",
-        sprintf("%3d", info$n),
+        info$n,
         ") → "
       )
     }
     
     
     # If this is a terminal group in the displayed tree,
-    # store its prediction and SSE.
+    # put its prediction and SSE directly on the branch.
     
     if (displayed_terminal(node)) {
       
+      terminal_text <- paste0(
+        prefix,
+        connector,
+        branch_text,
+        "p\u0302 = ",
+        fmt_p(info$prediction),
+        ", SSE = ",
+        fmt_error(info$sse),
+        "  *"
+      )
+      
       add_row(
-        left = paste0(
-          prefix,
-          connector,
-          branch_text
-        ),
-        prediction = info$prediction,
-        sse = info$sse,
+        text = terminal_text,
+        node = node,
         terminal = TRUE
       )
       
@@ -294,7 +298,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
     }
     
     
-    # Add the decision rule to the display.
+    # Add the decision rule.
     
     if (is.null(branch)) {
       
@@ -372,100 +376,12 @@ supertree <- function(model, depth = Inf, digits = 2) {
   )
   
   
-  # ----- Helpers for aligned Unicode output -----
-  
-  # Tree-drawing characters such as ├ and │ can cause problems with
-  # ordinary character counts. type = "width" measures their displayed
-  # width so that the p-hat and SSE columns line up correctly.
-  
-  display_width <- function(x) {
-    nchar(x, type = "width")
-  }
-  
-  
-  pad_right <- function(x, width) {
-    
-    spaces_needed <- width - display_width(x)
-    
-    if (spaces_needed > 0) {
-      paste0(x, strrep(" ", spaces_needed))
-    } else {
-      x
-    }
-  }
-  
-  
-  # ----- Format terminal statistics -----
-  
-  prediction_strings <- vapply(
-    rows,
-    function(x) {
-      
-      if (is.na(x$prediction)) {
-        ""
-      } else {
-        paste0(
-          "p\u0302 = ",
-          fmt_p(x$prediction)
-        )
-      }
-    },
-    character(1)
-  )
-  
-  
-  sse_strings <- vapply(
-    rows,
-    function(x) {
-      
-      if (is.na(x$sse)) {
-        ""
-      } else {
-        paste0(
-          "SSE = ",
-          fmt_sse(x$sse)
-        )
-      }
-    },
-    character(1)
-  )
-  
-  
-  # All terminal statistics begin at the same horizontal position,
-  # regardless of the depth of the terminal group.
-  
-  left_width <- max(
-    vapply(
-      rows,
-      function(x) display_width(x$left),
-      numeric(1)
-    )
-  ) + 4
-  
-  
-  pred_width <- max(
-    vapply(
-      prediction_strings,
-      display_width,
-      numeric(1)
-    )
-  ) + 3
-  
-  
-  sse_width <- max(
-    vapply(
-      sse_strings,
-      display_width,
-      numeric(1)
-    )
-  ) + 3
-  
-  
   # ----- Print tree -----
   
   root_n <- node_info(1)$n
   
   cat("\n")
+  
   cat(
     "DECISION TREE: ",
     model_formula,
@@ -481,42 +397,8 @@ supertree <- function(model, depth = Inf, digits = 2) {
   )
   
   
-  for (i in seq_along(rows)) {
-    
-    row <- rows[[i]]
-    
-    if (is.na(row$prediction)) {
-      
-      # Internal decision rule
-      
-      cat(
-        row$left,
-        "\n",
-        sep = ""
-      )
-      
-    } else {
-      
-      # Terminal group
-      
-      cat(
-        pad_right(
-          row$left,
-          left_width
-        ),
-        pad_right(
-          prediction_strings[i],
-          pred_width
-        ),
-        pad_right(
-          sse_strings[i],
-          sse_width
-        ),
-        if (row$terminal) "*" else "",
-        "\n",
-        sep = ""
-      )
-    }
+  for (row in rows) {
+    cat(row$text, "\n", sep = "")
   }
   
   
@@ -580,7 +462,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
     sprintf(
       "  %-17s %s\n",
       "SST:",
-      fmt_sse(sst)
+      fmt_error(sst)
     )
   )
   
@@ -588,7 +470,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
     sprintf(
       "  %-17s %s\n",
       "SSE:",
-      fmt_sse(model_sse)
+      fmt_error(model_sse)
     )
   )
   

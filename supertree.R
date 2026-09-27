@@ -25,8 +25,9 @@
 # The MODEL summary reports:
 #
 #   - the number of terminal groups
-#   - the total SSE across those groups
-#   - PRE relative to the empty model
+#   - SST, the error from the empty model
+#   - SSE, the error from the tree model
+#   - PRE, the proportional reduction in error from SST to SSE
 #
 # The optional `depth` argument can be used to examine only the first
 # levels of a larger tree:
@@ -46,7 +47,7 @@
 #   depth   Maximum depth of the tree to display. The root split is
 #           depth = 1. The default (Inf) displays the complete tree.
 #
-#   digits  Number of decimal places used for p-hat, SSE, and PRE.
+#   digits  Number of decimal places used for p-hat, SST, SSE, and PRE.
 #           Default = 2.
 #
 # An asterisk (*) identifies a terminal group in the tree being shown.
@@ -519,9 +520,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
   }
   
   
-  cat(
-    "\n* terminal group\n\n"
-  )
+  cat("\n* terminal group\n\n")
   
   
   # ----- Calculate MODEL statistics -----
@@ -555,16 +554,14 @@ supertree <- function(model, depth = Inf, digits = 2) {
   )
   
   
-  # The root node is the empty model, so its SSE is SST.
+  # The root node represents the empty model, so its SSE is SST.
   
-  empty_sse <- node_info(1)$sse
+  sst <- node_info(1)$sse
   
   
   # PRE = proportional reduction in error relative to the empty model.
   
-  pre <- (
-    empty_sse - model_sse
-  ) / empty_sse
+  pre <- (sst - model_sse) / sst
   
   
   # ----- Print MODEL summary -----
@@ -576,6 +573,14 @@ supertree <- function(model, depth = Inf, digits = 2) {
       "  %-17s %d\n",
       "Terminal groups:",
       length(endpoint_nodes)
+    )
+  )
+  
+  cat(
+    sprintf(
+      "  %-17s %s\n",
+      "SST:",
+      fmt_sse(sst)
     )
   )
   

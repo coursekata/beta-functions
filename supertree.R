@@ -16,15 +16,15 @@
 #   supertree(tree_model)
 #
 # Because `passed` is a numeric 0/1 variable, rpart() automatically fits
-# a regression tree using squared error. At each terminal group:
+# a regression tree using squared error. At each terminal node:
 #
-#   - p-hat is the mean of the 0/1 outcome in that group and therefore
+#   - p-hat is the mean of the 0/1 outcome in that node and therefore
 #     is also the proportion of cases with Y = 1.
-#   - SSE is the sum of squared errors within that group.
+#   - SSE is the sum of squared errors within that node
 #
 # The MODEL summary reports:
 #
-#   - the number of terminal groups
+#   - the number of terminal node
 #   - SST, the error from the empty model
 #   - SSE, the error from the tree model
 #   - Brier, the mean squared prediction error (SSE / n)
@@ -318,7 +318,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
   cat("MODEL\n")
   cat(sprintf(
     "  %-17s %d\n",
-    "Terminal groups:",
+    "Terminal nodes:",
     length(endpoint_nodes)
   ))
   cat(sprintf(

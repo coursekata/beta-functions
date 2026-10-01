@@ -37,7 +37,7 @@
 #   supertree(tree_model, depth = 2)
 #
 # When depth is specified, groups at the displayed boundary are treated
-# as terminal groups for purposes of calculating p-hat, SSE, Brier,
+# as terminal nodes for purposes of calculating p-hat, SSE, Brier,
 # and PRE. Thus supertree(model, depth = 1) shows the prediction
 # function and error that would result if the tree stopped after its
 # first split.
@@ -52,7 +52,7 @@
 #   digits  Number of decimal places used for p-hat, SST, SSE, Brier,
 #           and PRE. Default = 2.
 #
-# An asterisk (*) identifies a terminal group in the tree being shown.
+# An asterisk (*) identifies a terminal node in the tree being shown.
 #
 # NOTE: This version is designed for regression trees with quantitative
 # predictors. Support for categorical splitting variables would require
@@ -285,7 +285,7 @@ supertree <- function(model, depth = Inf, digits = 2) {
     cat(row$text, "\n", sep = "")
   }
 
-  cat("\n* terminal group\n\n")
+  cat("\n* terminal node\n\n")
 
   shown_nodes <- node_numbers[
     vapply(

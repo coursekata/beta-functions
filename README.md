@@ -52,6 +52,14 @@ See [GRADUATED.md](GRADUATED.md) for the full graduation history.
 
 ---
 
+## Tools
+
+| Tool | What it does |
+|---|---|
+| [Playground Link Maker](https://coursekata.github.io/beta-functions/playground-links/) ([source](docs/playground-links/index.html)) | Turns a GitHub notebook link into CourseKata Playground links that load the notebook through jsDelivr, so they work at schools that block GitHub. Currently opens notebooks in the beta Playground at play.ckbeta.org. |
+
+---
+
 ## Contributing
 
 If you have ideas for a new beta function:
